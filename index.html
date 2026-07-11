@@ -164,6 +164,7 @@
         
         let streamAtivo = null;
         let coordsGps = { lat: null, lng: null };
+        const MATRICULA_USUARIO = "2026-089";
 
         // 1. CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = "https://bkkbyaspzmzgonwxvlcc.supabase.co";
@@ -210,11 +211,93 @@
             );
         }
 
+        // Função para desativar/ativar os botões visualmente e funcionalmente
+        function gerenciarBotoes(proximaBatida) {
+            const botoes = {
+                'Entrada': document.querySelector("button[onclick*='Entrada']"),
+                'Saída Pausa': document.querySelector("button[onclick*='Saída Pausa']"),
+                'Retorno Pausa': document.querySelector("button[onclick*='Retorno Pausa']"),
+                'Saída': document.querySelector("button[onclick*='Saída']")
+            };
+
+            // Desativa todos primeiro
+            Object.keys(botoes).forEach(key => {
+                if (botoes[key]) {
+                    botoes[key].disabled = true;
+                    botoes[key].classList.add('opacity-40', 'cursor-not-allowed');
+                }
+            });
+
+            // Ativa apenas o próximo botão correto da lista
+            if (proximaBatida && botoes[proximaBatida]) {
+                botoes[proximaBatida].disabled = false;
+                botoes[proximaBatida].classList.remove('opacity-40', 'cursor-not-allowed');
+            }
+        }
+
+        // Carrega o status do dia atual direto do Supabase
+        async function checarStatusDoDia() {
+            const hoje = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+            
+            const { data, error } = await supabaseClient
+                .from('registros_ponto')
+                .select('tipo_batida, created_at')
+                .eq('matricula', MATRICULA_USUARIO)
+                .gte('created_at', `${hoje}T00:00:00.000Z`)
+                .order('created_at', { ascending: true });
+
+            if (error) {
+                console.error("Erro ao checar status:", error);
+                return;
+            }
+
+            // Mapeia os pontos já batidos hoje
+            const batidasHoje = data.map(d => d.tipo_batida);
+
+            // Atualiza os textos de status na tela
+            data.forEach(registro => {
+                const hora = new Date(registro.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                let idStatus = "";
+                if (registro.tipo_batida === 'Entrada') idStatus = 'status-entrada';
+                else if (registro.tipo_batida === 'Saída Pausa') idStatus = 'status-saida-pausa';
+                else if (registro.tipo_batida === 'Retorno Pausa') idStatus = 'status-retorno-pausa';
+                else if (registro.tipo_batida === 'Saída') idStatus = 'status-saida';
+
+                if (idStatus) {
+                    document.getElementById(idStatus).innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Batido às ${hora}`;
+                }
+            });
+
+            // Lógica de fluxo: descobre qual o próximo passo da jornada
+            if (!batidasHoje.includes('Entrada')) {
+                gerenciarBotoes('Entrada');
+            } else if (!batidasHoje.includes('Saída Pausa')) {
+                gerenciarBotoes('Saída Pausa');
+            } else if (!batidasHoje.includes('Retorno Pausa')) {
+                gerenciarBotoes('Retorno Pausa');
+            } else if (!batidasHoje.includes('Saída')) {
+                gerenciarBotoes('Saída');
+            } else {
+                gerenciarBotoes(null); // Todos os pontos do dia já foram batidos!
+            }
+        }
+
         // 5. Bater o Ponto (Envia Foto para o Storage e dados para a Tabela)
         async function registrarPonto(tipo) {
             if (!streamAtivo) {
                 return alert("Erro: Permissão de câmera necessária para bater o ponto.");
             }
+
+            // Feedback visual de carregamento
+            let idBotao = "";
+            if (tipo === 'Entrada') idBotao = 'status-entrada';
+            else if (tipo === 'Saída Pausa') idBotao = 'status-saida-pausa';
+            else if (tipo === 'Retorno Pausa') idBotao = 'status-retorno-pausa';
+            else if (tipo === 'Saída') idBotao = 'status-saida';
+
+            const statusLabel = document.getElementById(idBotao);
+            const textoOriginal = statusLabel.innerHTML;
+            statusLabel.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-indigo-500 mr-1"></i> Processando...`;
 
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth;
@@ -227,9 +310,6 @@
             canvas.classList.remove('hidden');
             btnRetake.classList.remove('hidden');
 
-            const agora = new Date();
-            const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
             canvas.toBlob(async (blob) => {
                 const nomeArquivo = `ponto_${Date.now()}.png`;
 
@@ -239,6 +319,7 @@
 
                 if (uploadError) {
                     alert("Erro ao subir imagem: " + uploadError.message);
+                    statusLabel.innerHTML = textoOriginal;
                     return;
                 }
 
@@ -247,7 +328,7 @@
                     .getPublicUrl(nomeArquivo);
 
                 const dadosPonto = {
-                    matricula: "2026-089",
+                    matricula: MATRICULA_USUARIO,
                     tipo_batida: tipo,
                     latitude: coordsGps.lat,
                     longitude: coordsGps.lng,
@@ -260,19 +341,18 @@
 
                 if (dbError) {
                     alert("Erro ao gravar dados no banco: " + dbError.message);
+                    statusLabel.innerHTML = textoOriginal;
                     return;
                 }
 
-                let idBotao = "";
-                if (tipo === 'Entrada') idBotao = 'status-entrada';
-                else if (tipo === 'Saída Pausa') idBotao = 'status-saida-pausa';
-                else if (tipo === 'Retorno Pausa') idBotao = 'status-retorno-pausa';
-                else if (tipo === 'Saída') idBotao = 'status-saida';
-
-                if (idBotao) {
-                    document.getElementById(idBotao).innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Batido às ${horaFormatada}`;
-                    alert(`Sucesso total! Ponto de [${tipo}] batido com foto e localização salvos com sucesso.`);
-                }
+                alert(`Sucesso total! Ponto de [${tipo}] batido com sucesso.`);
+                
+                // Restaura a câmera e atualiza o estado dos botões
+                canvas.classList.add('hidden');
+                video.classList.remove('hidden');
+                btnRetake.classList.add('hidden');
+                
+                checarStatusDoDia();
 
             }, 'image/png');
         }
@@ -282,6 +362,9 @@
             video.classList.remove('hidden');
             btnRetake.classList.add('hidden');
         });
+
+        // Inicializa checando o status assim que a página abre
+        window.addEventListener('DOMContentLoaded', checarStatusDoDia);
     </script>
 </body>
 </html>
