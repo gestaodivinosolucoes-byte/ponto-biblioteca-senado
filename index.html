@@ -247,28 +247,23 @@
             return R * c;
         }
 
-        function gerenciarBotoes(proximaBatida) {
-            const botoes = {
-                'Entrada': document.getElementById('btn-entrada'),
-                'Saída Pausa': document.getElementById('btn-saida-pausa'),
-                'Retorno Pausa': document.getElementById('btn-retorno-pausa'),
-                'Saída': document.getElementById('btn-saida')
-            };
-
-            Object.keys(botoes).forEach(key => {
-                if (botoes[key]) {
-                    botoes[key].disabled = true;
-                    botoes[key].classList.add('opacity-40', 'cursor-not-allowed');
+        function gerenciarBotoes(botoesAtivos, botoesDesativados) {
+            botoesAtivos.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = false;
+                    el.classList.remove('opacity-40', 'cursor-not-allowed');
                 }
             });
-
-            if (proximaBatida && botoes[proximaBatida]) {
-                botoes[proximaBatida].disabled = false;
-                botoes[proximaBatida].classList.remove('opacity-40', 'cursor-not-allowed');
-            }
+            botoesDesativados.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.disabled = true;
+                    el.classList.add('opacity-40', 'cursor-not-allowed');
+                }
+            });
         }
 
-        // Monta o histórico em tempo real na tela buscando fotos e dados do banco
         async function checarStatusDoDia() {
             const dataLocal = new Date();
             const ano = dataLocal.getFullYear();
@@ -308,7 +303,9 @@
                 }
                 const metaEl = document.getElementById('total-horas-dia');
                 if (metaEl) metaEl.textContent = "Total: 0h00m / 6h";
-                gerenciarBotoes('Entrada');
+                
+                // Sem registros: apenas o botão de Entrada ativo.
+                gerenciarBotoes(['btn-entrada'], ['btn-saida-pausa', 'btn-retorno-pausa', 'btn-saida']);
                 return;
             }
 
@@ -318,7 +315,6 @@
             let horarioSaida = null;
             const batidasHoje = [];
 
-            // AQUI ELE RENDERIZA CADA PONTO COM A FOTO E GPS CAPTURADOS
             data.forEach(registro => {
                 const tipo = registro.tipo_batida;
                 batidasHoje.push(tipo);
@@ -329,7 +325,7 @@
                 if (tipo.includes('Entrada')) horarioEntrada = dataRegistro;
                 else if (tipo.includes('Saída Pausa') || tipo.includes('Intervalo')) horarioSaidaPausa = dataRegistro;
                 else if (tipo.includes('Retorno')) horarioRetornoPausa = dataRegistro;
-                else if (tipo.includes('Saída')) horarioSaida = dataRegistro;
+                else if (tipo.includes('Saída') && !tipo.includes('Pausa')) horarioSaida = dataRegistro;
 
                 let mapaLinkHtml = `<span class="text-[10px] text-slate-400 font-bold block">Sem localização</span>`;
                 if (registro.latitude && registro.longitude) {
@@ -369,7 +365,7 @@
                 if (tipo.includes('Entrada')) idStatus = 'status-entrada';
                 else if (tipo.includes('Saída Pausa') || tipo.includes('Intervalo')) idStatus = 'status-saida-pausa';
                 else if (tipo.includes('Retorno')) idStatus = 'status-retorno-pausa';
-                else if (tipo.includes('Saída')) idStatus = 'status-saida';
+                else if (tipo.includes('Saída') && !tipo.includes('Pausa')) idStatus = 'status-saida';
 
                 const statusLabel = document.getElementById(idStatus);
                 if (statusLabel) {
@@ -397,16 +393,24 @@
             const temRetorno = batidasHoje.some(b => b.includes('Retorno'));
             const temSaida = batidasHoje.some(b => b.includes('Saída') && !b.includes('Pausa'));
 
-            if (!temEntrada) {
-                gerenciarBotoes('Entrada');
-            } else if (!temPausa) {
-                gerenciarBotoes('Saída Pausa');
-            } else if (!temRetorno) {
-                gerenciarBotoes('Retorno Pausa');
-            } else if (!temSaida) {
-                gerenciarBotoes('Saída');
-            } else {
-                gerenciarBotoes(null);
+            // SE JÁ FINALIZOU O EXPEDIENTE: Bloqueia tudo.
+            if (temSaida) {
+                gerenciarBotoes([], ['btn-entrada', 'btn-saida-pausa', 'btn-retorno-pausa', 'btn-saida']);
+                return;
+            }
+
+            // NOVA LÓGICA DE FLUXO COM O BOTÃO DE SAÍDA FINAL SEMPRE ATIVO APÓS A ENTRADA
+            if (temEntrada) {
+                if (!temPausa) {
+                    // Entrou mas não saiu para o almoço: Pode ir para o almoço OU direto finalizar o expediente.
+                    gerenciarBotoes(['btn-saida-pausa', 'btn-saida'], ['btn-entrada', 'btn-retorno-pausa']);
+                } else if (temPausa && !temRetorno) {
+                    // Saiu para o almoço mas não voltou: Pode registrar o retorno OU direto finalizar o expediente.
+                    gerenciarBotoes(['btn-retorno-pausa', 'btn-saida'], ['btn-entrada', 'btn-saida-pausa']);
+                } else if (temRetorno) {
+                    // Voltou do almoço: Próximo passo natural é finalizar o expediente.
+                    gerenciarBotoes(['btn-saida'], ['btn-entrada', 'btn-saida-pausa', 'btn-retorno-pausa']);
+                }
             }
         }
 
