@@ -89,9 +89,27 @@
         </div>
 
         <!-- Painel de Batidas de Ponto -->
-        <div class="space-y-2.5">
-            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Registrar Movimentação</div>
-            
+        <!-- PAINEL DE HISTÓRICO DO DIA (Estilo Tirvu/Tikit) -->
+<div class="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 max-w-md mx-auto">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i>
+            Linha do Tempo (Hoje)
+        </h3>
+        <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full" id="total-horas-dia">
+            Meta: 0h / 6h
+        </span>
+    </div>
+
+    <!-- Lista onde os pontos vão aparecer dinamicamente -->
+    <div id="historico-container" class="space-y-4">
+        <!-- Estado Vazio padrão -->
+        <div id="historico-vazio" class="text-center py-6 text-gray-400 text-sm">
+            <i class="fa-solid fa-mug-hot text-2xl mb-2 block text-gray-300"></i>
+            Nenhuma batida registrada hoje.
+        </div>
+    </div>
+</div>
             <!-- Entrada -->
             <button onclick="registrarPonto('Entrada')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
                 <div class="flex items-center space-x-3.5">
