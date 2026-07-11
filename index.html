@@ -1,4 +1,5 @@
-// 1. CONFIGURAÇÃO DO SUPABASE (AQUI JÁ COM AS SUAS CHAVES CERTAS)
+<script>
+        // 1. CONFIGURAÇÃO DO SUPABASE (AQUI JÁ COM AS SUAS CHAVES CERTAS)
         const SUPABASE_URL = "https://bkkbyaspzmzgonwxvlcc.supabase.co";
         const SUPABASE_KEY = "sb_publishable_ixFc1wuBcJ47PkSG7czu-Q_M9xRC19U";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -49,7 +50,6 @@
                 return alert("Erro: Permissão de câmera necessária para bater o ponto.");
             }
 
-            // Captura e congela a imagem na tela
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -64,11 +64,9 @@
             const agora = new Date();
             const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-            // Transforma o desenho do Canvas em um arquivo PNG real
             canvas.toBlob(async (blob) => {
                 const nomeArquivo = `ponto_${Date.now()}.png`;
 
-                // A) Envia a foto para a pasta "fotos_ponto" do Storage
                 const { data: uploadData, error: uploadError } = await supabaseClient.storage
                     .from('fotos_ponto')
                     .upload(nomeArquivo, blob, { contentType: 'image/png' });
@@ -78,14 +76,12 @@
                     return;
                 }
 
-                // B) Pega o link público definitivo da imagem que acabou de subir
                 const { data: publicUrlData } = supabaseClient.storage
                     .from('fotos_ponto')
                     .getPublicUrl(nomeArquivo);
 
-                // C) Junta tudo e salva na tabela "registros_ponto"
                 const dadosPonto = {
-                    matricula: "2026-089", // Matrícula de teste
+                    matricula: "2026-089",
                     tipo_batida: tipo,
                     latitude: coordsGps.lat,
                     longitude: coordsGps.lng,
@@ -101,7 +97,6 @@
                     return;
                 }
 
-                // Atualiza o botão correspondente na interface do site
                 let idBotao = "";
                 if (tipo === 'Entrada') idBotao = 'status-entrada';
                 else if (tipo === 'Saída Pausa') idBotao = 'status-saida-pausa';
@@ -116,7 +111,6 @@
             }, 'image/png');
         }
 
-        // Resetar foto capturada caso queira tirar outra antes de bater
         btnRetake.addEventListener('click', () => {
             canvas.classList.add('hidden');
             video.classList.remove('hidden');
