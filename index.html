@@ -183,15 +183,21 @@
         
         let streamAtivo = null;
         let coordsGps = { lat: null, lng: null };
+// 1. CONFIGURAÇÃO DO SUPABASE (PREENCHIDO COM SUAS CHAVES)
+        const SUPABASE_URL = "https://bkkbyaspzmzgonwxvlcc.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_ixFc1wuBcJ47PkSG7czu-Q_M9xRC19U";
+        
+        // Inicializa o banco de dados do Supabase usando o script carregado no topo
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 1. Relógio e Data ao Vivo
+        // 2. Relógio e Data ao Vivo
         setInterval(() => {
             const agora = new Date();
             document.getElementById('live-clock').textContent = agora.toLocaleTimeString('pt-BR');
             document.getElementById('current-date').textContent = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }, 1000);
 
-        // 2. Ligar Câmera Frontal automaticamente
+        // 3. Ligar Câmera Frontal automaticamente
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
             .then(stream => {
                 streamAtivo = stream;
@@ -203,7 +209,7 @@
                 cameraError.classList.remove('hidden');
             });
 
-        // 3. Capturar Geolocalização
+        // 4. Capturar Geolocalização
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 pos => {
@@ -224,14 +230,12 @@
             );
         }
 
-        // 4. Bater o Ponto (Captura a foto e salva o horário local)
-        function registrarPonto(tipo) {
+        // 5. Bater o Ponto e Gravar no Supabase de verdade!
+        async function registrarPonto(tipo) {
             if (streamAtivo) {
                 const ctx = canvas.getContext('2d');
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
-                
-                // Desenha a imagem mantendo o efeito de espelho correto
                 ctx.translate(canvas.width, 0);
                 ctx.scale(-1, 1);
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -244,6 +248,24 @@
             const agora = new Date();
             const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             
+            // Dados que vão para a tabela do Supabase
+            const dadosPonto = {
+                matricula: "2026-089", // Matrícula de teste do Matheus
+                tipo_batida: tipo,
+                latitude: coordsGps.lat,
+                longitude: coordsGps.lng
+            };
+
+            // Envia para a tabela "registros_ponto" do Supabase
+            const { error } = await supabaseClient
+                .from('registros_ponto')
+                .insert([dadosPonto]);
+
+            if (error) {
+                alert("Erro ao salvar no banco de dados: " + error.message);
+                return;
+            }
+
             let idBotao = "";
             if (tipo === 'Entrada') idBotao = 'status-entrada';
             else if (tipo === 'Saída Pausa') idBotao = 'status-saida-pausa';
@@ -252,7 +274,7 @@
 
             if (idBotao) {
                 document.getElementById(idBotao).innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Batido às ${horaFormatada}`;
-                alert(`Sucesso! Registro de [${tipo}] efetuado localmente às ${horaFormatada}.\n\nPróxima Etapa: Salvar permanentemente no Supabase.`);
+                alert(`Sucesso! Ponto de [${tipo}] gravado em tempo real no Supabase.`);
             }
         }
 
@@ -260,7 +282,11 @@
         btnRetake.addEventListener('click', () => {
             canvas.classList.add('hidden');
             video.classList.remove('hidden');
-            btnRetake.classList.add('hidden');
+            btnRetake.addEventListener('click', () => {
+                canvas.classList.add('hidden');
+                video.classList.remove('hidden');
+                btnRetake.classList.add('hidden');
+            });
         });
     </script>
 </body>
