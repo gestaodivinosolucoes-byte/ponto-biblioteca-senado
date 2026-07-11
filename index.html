@@ -89,29 +89,9 @@
         </div>
 
         <!-- Painel de Batidas de Ponto -->
-        <!-- PAINEL DE HISTÓRICO DO DIA (Estilo Tirvu/Tikit) -->
-<div class="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-100 max-w-md mx-auto">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left text-indigo-600"></i>
-            Linha do Tempo (Hoje)
-        </h3>
-        <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full" id="total-horas-dia">
-            Meta: 0h / 6h
-        </span>
-    </div>
-
-    <!-- Lista onde os pontos vão aparecer dinamicamente -->
-    <div id="historico-container" class="space-y-4">
-        <!-- Estado Vazio padrão -->
-        <div id="historico-vazio" class="text-center py-6 text-gray-400 text-sm">
-            <i class="fa-solid fa-mug-hot text-2xl mb-2 block text-gray-300"></i>
-            Nenhuma batida registrada hoje.
-        </div>
-    </div>
-</div>
+        <div class="space-y-3">
             <!-- Entrada -->
-            <button onclick="registrarPonto('Entrada')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
+            <button id="btn-entrada" onclick="registrarPonto('Entrada')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
                 <div class="flex items-center space-x-3.5">
                     <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base group-hover:bg-emerald-100 transition">
                         <i class="fa-solid fa-right-to-bracket"></i>
@@ -125,7 +105,7 @@
             </button>
 
             <!-- Saída Almoço -->
-            <button onclick="registrarPonto('Saída Pausa')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
+            <button id="btn-saida-pausa" onclick="registrarPonto('Saída Pausa')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
                 <div class="flex items-center space-x-3.5">
                     <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-base group-hover:bg-amber-100 transition">
                         <i class="fa-solid fa-utensils"></i>
@@ -139,7 +119,7 @@
             </button>
 
             <!-- Retorno Almoço -->
-            <button onclick="registrarPonto('Retorno Pausa')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
+            <button id="btn-retorno-pausa" onclick="registrarPonto('Retorno Pausa')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
                 <div class="flex items-center space-x-3.5">
                     <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold text-base group-hover:bg-cyan-100 transition">
                         <i class="fa-solid fa-briefcase"></i>
@@ -153,7 +133,7 @@
             </button>
 
             <!-- Saída -->
-            <button onclick="registrarPonto('Saída')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
+            <button id="btn-saida" onclick="registrarPonto('Saída')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
                 <div class="flex items-center space-x-3.5">
                     <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-base group-hover:bg-rose-100 transition">
                         <i class="fa-solid fa-right-from-bracket"></i>
@@ -229,17 +209,15 @@
             );
         }
 
-        // Função corrigida para alinhar com os nomes exatos do seu HTML
+        // Controla o estado visual dos botões de forma sequencial simples
         function gerenciarBotoes(proximaBatida) {
-            // Aqui buscamos os botões pelo texto que está escrito neles ou pelo clique
             const botoes = {
-                'Entrada': document.querySelector("button[onclick*='Entrada']"),
-                'Saída Pausa': document.querySelector("button[onclick*='Pausa'], button[onclick*='Intervalo']"),
-                'Retorno Pausa': document.querySelector("button[onclick*='Retorno']"),
-                'Saída': document.querySelector("button[onclick*='Saída']:not([onclick*='Pausa']):not([onclick*='Intervalo'])")
+                'Entrada': document.getElementById('btn-entrada'),
+                'Saída Pausa': document.getElementById('btn-saida-pausa'),
+                'Retorno Pausa': document.getElementById('btn-retorno-pausa'),
+                'Saída': document.getElementById('btn-saida')
             };
 
-            // Desativa todos primeiro para limpar o estado
             Object.keys(botoes).forEach(key => {
                 if (botoes[key]) {
                     botoes[key].disabled = true;
@@ -247,168 +225,31 @@
                 }
             });
 
-            // Ativa rigorosamente APENAS o próximo da vez
-            if (proximaBatida) {
-                let botaoAlvo = botoes[proximaBatida];
-                
-                // Correção extra se o seu banco salvou como "Saída Intervalo" ou "Saída Pausa"
-                if (proximaBatida === 'Saída Pausa' || proximaBatida === 'Saída Intervalo') {
-                    botaoAlvo = document.querySelector("button[onclick*='Pausa'], button[onclick*='Intervalo']");
-                }
-                
-                if (botaoAlvo) {
-                    botaoAlvo.disabled = false;
-                    botaoAlvo.classList.remove('opacity-40', 'cursor-not-allowed');
-                }
+            if (proximaBatida && botoes[proximaBatida]) {
+                botoes[proximaBatida].disabled = false;
+                botoes[proximaBatida].classList.remove('opacity-40', 'cursor-not-allowed');
             }
         }
-        // Carrega o status do dia atual direto do Supabase
-      // Carrega o status, monta o histórico e calcula as horas do dia
-        // Coordenadas centrais da sua Biblioteca (Exemplo: Biblioteca Nacional de Brasília)
-        const BIBLIOTECA_LAT = -15.797512303088727;
-        const BIBLIOTECA_LNG = -47.863378381631556;
-        const RAIO_MAXIMO_METROS = 2000; // Cerca virtual de 2000 metros
 
-        // Função matemática para calcular a distância exata entre duas coordenadas em metros
-        function calcularDistancia(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // Raio da Terra em metros
-            const phi1 = lat1 * Math.PI / 180;
-            const phi2 = lat2 * Math.PI / 180;
-            const deltaPhi = (lat2 - lat1) * Math.PI / 180;
-            const deltaLambda = (lon2 - lon1) * Math.PI / 180;
-
-            const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-                      Math.cos(phi1) * Math.cos(phi2) *
-                      Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-            return R * c; // Distância em metros
-        }
-
-        // Carrega o status, monta o histórico e calcula as horas do dia
+        // Checa apenas o status das batidas feitas para travar/liberar botões
         async function checarStatusDoDia() {
-            const dataLocal = new Date();
-            const ano = dataLocal.getFullYear();
-            const mes = String(dataLocal.getMonth() + 1).padStart(2, '0');
-            const dia = String(dataLocal.getDate()).padStart(2, '0');
-            const hoje = `${ano}-${mes}-${dia}`;
+            const hoje = new Date().toISOString().split('T')[0];
             
             const { data, error } = await supabaseClient
                 .from('registros_ponto')
-                .select('tipo_batida, created_at, foto_url, latitude, longitude')
+                .select('tipo_batida')
                 .eq('matricula', MATRICULA_USUARIO)
-                .gte('created_at', `${hoje}T00:00:00`)
-                .order('created_at', { ascending: true });
+                .gte('created_at', `${hoje}T00:00:00`);
 
-            if (error) {
-                console.error("Erro ao checar status:", error);
-                return;
-            }
+            if (error) return console.error(error);
 
-            const container = document.getElementById('historico-container');
-            if (container) container.innerHTML = "";
-
-            if (!data || data.length === 0) {
-                if (container) {
-                    container.innerHTML = `
-                        <div id="historico-vazio" class="text-center py-6 text-gray-400 text-sm">
-                            <i class="fa-solid fa-mug-hot text-2xl mb-2 block text-gray-300"></i>
-                            Nenhuma batida registrada hoje.
-                        </div>`;
-                }
-                const metaEl = document.getElementById('total-horas-dia');
-                if (metaEl) metaEl.textContent = "Meta: 0h / 6h";
-                gerenciarBotoes('Entrada');
-                return;
-            }
-
-            let horarioEntrada = null;
-            let horarioSaidaPausa = null;
-            let horarioRetornoPausa = null;
-            let horarioSaida = null;
-            const batidasHoje = [];
-
-            data.forEach(registro => {
-                const tipo = registro.tipo_batida;
-                batidasHoje.push(tipo);
-                
-                const dataRegistro = new Date(registro.created_at);
-                const horaFormatada = dataRegistro.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                
-                if (tipo === 'Entrada') horarioEntrada = dataRegistro;
-                else if (tipo.includes('Pausa') || tipo.includes('Intervalo')) {
-                    if (tipo.includes('Retorno')) horarioRetornoPausa = dataRegistro;
-                    else horarioSaidaPausa = dataRegistro;
-                } else if (tipo === 'Saída') horarioSaida = dataRegistro;
-
-                // CRIAÇÃO DO LINK VISUAL PARA O MAPS
-                let mapaLinkHtml = `<span class="text-xs text-gray-400">Sem GPS</span>`;
-                if (registro.latitude && registro.longitude) {
-                    const urlMaps = `https://www.google.com/maps/search/?api=1&query=${registro.latitude},${registro.longitude}`;
-                    mapaLinkHtml = `
-                        <a href="${urlMaps}" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 mt-0.5">
-                            <i class="fa-solid fa-map-location-dot text-rose-500"></i> 
-                            Ver no Google Maps →
-                        </a>
-                    `;
-                }
-
-                if (container) {
-                    const itemHtml = `
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                            <div class="flex items-center gap-3">
-                                <img src="${registro.foto_url || 'https://via.placeholder.com/150'}" 
-                                     alt="Foto do ponto" 
-                                     class="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm"
-                                />
-                                <div>
-                                    <p class="font-bold text-gray-800 text-sm">${tipo}</p>
-                                    ${mapaLinkHtml}
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-sm font-black text-indigo-600 bg-white px-2.5 py-1 rounded-md border border-gray-100 shadow-sm">
-                                    ${horaFormatada}
-                                </span>
-                            </div>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', itemHtml);
-                }
-
-                let idStatus = "";
-                if (tipo === 'Entrada') idStatus = 'status-entrada';
-                else if (tipo.includes('Pausa') || tipo.includes('Intervalo')) {
-                    if (tipo.includes('Retorno')) idStatus = 'status-retorno-pausa';
-                    else idStatus = 'status-saida-pausa';
-                } else if (tipo === 'Saída') idStatus = 'status-saida';
-
-                const statusLabel = document.getElementById(idStatus);
-                if (statusLabel) {
-                    statusLabel.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Batido às ${horaFormatada}`;
-                }
-            });
-
-            let milissegundosTrabalhados = 0;
-            if (horarioEntrada) {
-                const fimPeriodo1 = horarioSaidaPausa || horarioSaida || new Date();
-                milissegundosTrabalhados += (fimPeriodo1 - horarioEntrada);
-            }
-            if (horarioRetornoPausa) {
-                const fimPeriodo2 = horarioSaida || new Date();
-                milissegundosTrabalhados += (fimPeriodo2 - horarioRetornoPausa);
-            }
-
-            const totalHoras = Math.floor(milissegundosTrabalhados / (1000 * 60 * 60));
-            const totalMinutos = Math.floor((milissegundosTrabalhados % (1000 * 60 * 60)) / (1000 * 60));
-            const metaEl = document.getElementById('total-horas-dia');
-            if (metaEl) metaEl.textContent = `Total: ${totalHoras}h${String(totalMinutos).padStart(2, '0')}m / 6h`;
+            const batidasHoje = data.map(b => b.tipo_batida);
 
             if (!batidasHoje.includes('Entrada')) {
                 gerenciarBotoes('Entrada');
-            } else if (!batidasHoje.some(b => b.includes('Pausa') || b.includes('Intervalo'))) {
+            } else if (!batidasHoje.includes('Saída Pausa')) {
                 gerenciarBotoes('Saída Pausa');
-            } else if (!batidasHoje.some(b => b.includes('Retorno'))) {
+            } else if (!batidasHoje.includes('Retorno Pausa')) {
                 gerenciarBotoes('Retorno Pausa');
             } else if (!batidasHoje.includes('Saída')) {
                 gerenciarBotoes('Saída');
@@ -417,40 +258,14 @@
             }
         }
 
-        // Bater o Ponto com Inteligência de Perímetro (Geofencing)
+        // Bater o Ponto simples
         async function registrarPonto(tipo) {
-            if (!streamAtivo) {
-                return alert("Erro: Permissão de câmera necessária.");
-            }
+            if (!streamAtivo) return alert("Erro: Câmera necessária.");
+            if (!coordsGps.lat) return alert("Erro: GPS necessário.");
 
-            if (!coordsGps.lat || !coordsGps.lng) {
-                return alert("Erro: GPS não detectado. Ative a localização para bater o ponto.");
-            }
-
-            // Validação de Perímetro
-            const distanciaDaBiblioteca = calcularDistancia(coordsGps.lat, coordsGps.lng, BIBLIOTECA_LAT, BIBLIOTECA_LNG);
-            let tipoFinalNoBanco = tipo;
-
-            // Se o usuário estiver a mais de 100 metros do local correto, avisa e etiqueta no banco
-            if (distanciaDaBiblioteca > RAIO_MAXIMO_METROS) {
-                const prosseguir = confirm(`Atenção: Você está a ${Math.round(distanciaDaBiblioteca)}m de distância da Biblioteca. O ponto será registrado como "Fora do Perímetro". Deseja continuar?`);
-                if (!prosseguir) return;
-                tipoFinalNoBanco = `${tipo} (Fora do Perímetro)`;
-            }
-
-            let idBotao = "";
-            if (tipo === 'Entrada') idBotao = 'status-entrada';
-            else if (tipo.includes('Pausa') || tipo.includes('Intervalo')) {
-                if (tipo.includes('Retorno')) idBotao = 'status-retorno-pausa';
-                else idBotao = 'status-saida-pausa';
-            } else if (tipo === 'Saída') idBotao = 'status-saida';
-
-            const statusLabel = document.getElementById(idBotao);
-            let textoOriginal = "";
-            if (statusLabel) {
-                textoOriginal = statusLabel.innerHTML;
-                statusLabel.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-indigo-500 mr-1"></i> Gravando...`;
-            }
+            let idStatus = tipo === 'Entrada' ? 'status-entrada' : tipo === 'Saída Pausa' ? 'status-saida-pausa' : tipo === 'Retorno Pausa' ? 'status-retorno-pausa' : 'status-saida';
+            const statusLabel = document.getElementById(idStatus);
+            if (statusLabel) statusLabel.innerHTML = `Gravando...`;
 
             const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth;
@@ -458,62 +273,34 @@
             ctx.translate(canvas.width, 0);
             ctx.scale(-1, 1);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            video.classList.add('hidden');
-            canvas.classList.remove('hidden');
-            btnRetake.classList.remove('hidden');
 
             canvas.toBlob(async (blob) => {
                 const nomeArquivo = `ponto_${Date.now()}.png`;
 
-                const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                const { error: uploadError } = await supabaseClient.storage
                     .from('fotos_ponto')
                     .upload(nomeArquivo, blob, { contentType: 'image/png' });
 
-                if (uploadError) {
-                    alert("Erro no upload: " + uploadError.message);
-                    if (statusLabel) statusLabel.innerHTML = textoOriginal;
-                    return;
-                }
+                if (uploadError) return alert("Erro upload foto");
 
-                const { data: publicUrlData } = supabaseClient.storage
-                    .from('fotos_ponto')
-                    .getPublicUrl(nomeArquivo);
-
-                const dadosPonto = {
-                    matricula: MATRICULA_USUARIO,
-                    tipo_batida: tipoFinalNoBanco,
-                    latitude: coordsGps.lat,
-                    longitude: coordsGps.lng,
-                    foto_url: publicUrlData.publicUrl
-                };
+                const { data: publicUrlData } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nomeArquivo);
 
                 const { error: dbError } = await supabaseClient
                     .from('registros_ponto')
-                    .insert([dadosPonto]);
+                    .insert([{
+                        matricula: MATRICULA_USUARIO,
+                        tipo_batida: tipo,
+                        latitude: coordsGps.lat,
+                        longitude: coordsGps.lng,
+                        foto_url: publicUrlData.publicUrl
+                    }]);
 
-                if (dbError) {
-                    alert("Erro no banco: " + dbError.message);
-                    if (statusLabel) statusLabel.innerHTML = textoOriginal;
-                    return;
-                }
+                if (dbError) return alert("Erro ao salvar no banco");
 
-                alert(`Ponto registrado com sucesso! Localização checada.`);
-                
-                canvas.classList.add('hidden');
-                video.classList.remove('hidden');
-                btnRetake.classList.add('hidden');
-                
+                alert("Ponto registrado!");
                 checarStatusDoDia();
-
             }, 'image/png');
         }
-
-        btnRetake.addEventListener('click', () => {
-            canvas.classList.add('hidden');
-            video.classList.remove('hidden');
-            btnRetake.classList.add('hidden');
-        });
 
         window.addEventListener('DOMContentLoaded', checarStatusDoDia);
     </script>
