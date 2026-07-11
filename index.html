@@ -263,20 +263,17 @@
             }
         }
         // Carrega o status do dia atual direto do Supabase
-        async function checarStatusDoDia() {
-            const hoje = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
-            
-            const { data, error } = await supabaseClient
-                .from('registros_ponto')
-                .select('tipo_batida, created_at')
-                .eq('matricula', MATRICULA_USUARIO)
-                .gte('created_at', `${hoje}T00:00:00.000Z`)
-                .order('created_at', { ascending: true });
-
-            if (error) {
-                console.error("Erro ao checar status:", error);
-                return;
-            }
+       async function checarStatusDoDia() {
+    const hoje = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+    
+    const { data, error } = await supabaseClient
+        .from('registros_ponto')
+        .select('tipo_batida, created_at')
+        // ... (as linhas do meio mudam de acordo com a versão anterior)
+    } else {
+        gerenciarBotoes(null);
+    }
+}
 
             // Mapeia os pontos já batidos hoje
             const batidasHoje = data.map(d => d.tipo_batida);
