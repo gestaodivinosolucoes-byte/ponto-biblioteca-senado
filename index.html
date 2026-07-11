@@ -229,16 +229,17 @@
             );
         }
 
-        // Função para desativar/ativar os botões visualmente e funcionalmente
+        // Função corrigida para alinhar com os nomes exatos do seu HTML
         function gerenciarBotoes(proximaBatida) {
+            // Aqui buscamos os botões pelo texto que está escrito neles ou pelo clique
             const botoes = {
                 'Entrada': document.querySelector("button[onclick*='Entrada']"),
-                'Saída Pausa': document.querySelector("button[onclick*='Saída Pausa']"),
-                'Retorno Pausa': document.querySelector("button[onclick*='Retorno Pausa']"),
-                'Saída': document.querySelector("button[onclick*='Saída']")
+                'Saída Pausa': document.querySelector("button[onclick*='Pausa'], button[onclick*='Intervalo']"),
+                'Retorno Pausa': document.querySelector("button[onclick*='Retorno']"),
+                'Saída': document.querySelector("button[onclick*='Saída']:not([onclick*='Pausa']):not([onclick*='Intervalo'])")
             };
 
-            // Desativa todos primeiro
+            // Desativa todos primeiro para limpar o estado
             Object.keys(botoes).forEach(key => {
                 if (botoes[key]) {
                     botoes[key].disabled = true;
@@ -246,13 +247,21 @@
                 }
             });
 
-            // Ativa apenas o próximo botão correto da lista
-            if (proximaBatida && botoes[proximaBatida]) {
-                botoes[proximaBatida].disabled = false;
-                botoes[proximaBatida].classList.remove('opacity-40', 'cursor-not-allowed');
+            // Ativa rigorosamente APENAS o próximo da vez
+            if (proximaBatida) {
+                let botaoAlvo = botoes[proximaBatida];
+                
+                // Correção extra se o seu banco salvou como "Saída Intervalo" ou "Saída Pausa"
+                if (proximaBatida === 'Saída Pausa' || proximaBatida === 'Saída Intervalo') {
+                    botaoAlvo = document.querySelector("button[onclick*='Pausa'], button[onclick*='Intervalo']");
+                }
+                
+                if (botaoAlvo) {
+                    botaoAlvo.disabled = false;
+                    botaoAlvo.classList.remove('opacity-40', 'cursor-not-allowed');
+                }
             }
         }
-
         // Carrega o status do dia atual direto do Supabase
         async function checarStatusDoDia() {
             const hoje = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
