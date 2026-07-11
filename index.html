@@ -1,5 +1,171 @@
-<script>
-        // 1. CONFIGURAÇÃO DO SUPABASE (AQUI JÁ COM AS SUAS CHAVES CERTAS)
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ponto Eletrônico - Biblioteca</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-50 min-h-screen font-sans flex flex-col justify-between">
+
+    <!-- Cabeçalho -->
+    <header class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-indigo-100">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-slate-800 tracking-tight">Biblioteca do Senado</h1>
+                    <p class="text-xs text-slate-500 font-medium">Controle de Ponto Eletrônico</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div id="live-clock" class="text-lg font-black text-indigo-600 tabular-nums">00:00:00</div>
+                <div id="current-date" class="text-xs text-slate-500 font-bold">--/--/----</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="max-w-md mx-auto w-full px-4 py-6 flex-1 flex flex-col space-y-5">
+        
+        <!-- Bloco de Identificação Fixa -->
+        <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+            <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold backdrop-blur-sm">
+                    M
+                </div>
+                <div>
+                    <div class="text-xs text-indigo-100 font-medium uppercase tracking-wider">Estagiário Vinculado</div>
+                    <h2 class="text-lg font-bold leading-tight tracking-tight">Matheus Silva de Oliveira</h2>
+                    <div class="text-xs text-indigo-200 mt-0.5">Matrícula: <span class="font-mono bg-white/20 px-1.5 py-0.5 rounded text-white font-bold">2026-089</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Câmera / Validação Facial -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col items-center">
+            <div class="w-full flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                    <i class="fa-solid fa-face-recognition text-indigo-500 mr-1.5 text-sm"></i> Reconhecimento Facial
+                </span>
+                <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">Frontal</span>
+            </div>
+            
+            <div class="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden shadow-inner flex items-center justify-center border border-slate-800">
+                <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+                <canvas id="photo-capture" class="w-full h-full object-cover hidden"></canvas>
+                
+                <div id="camera-error" class="absolute inset-0 bg-slate-900 flex flex-col items-center justify-center text-center p-6 hidden">
+                    <i class="fa-solid fa-video-slash text-slate-500 text-3xl mb-2"></i>
+                    <p class="text-sm text-slate-300 font-medium">Acesso à câmera bloqueado</p>
+                    <p class="text-xs text-slate-500 mt-1">Por favor, permita o acesso para registrar o ponto.</p>
+                </div>
+            </div>
+            <button id="btn-retake" class="mt-3 px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition hidden">
+                <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Tirar Nova Foto
+            </button>
+        </div>
+
+        <!-- Telemetria GPS -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div id="geo-icon" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-slate-700">Geolocalização</div>
+                    <div id="geo-text" class="text-xs text-slate-400 font-medium">Obtendo coordenadas...</div>
+                </div>
+            </div>
+            <span id="badge-geo" class="text-xs bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Aguardando</span>
+        </div>
+
+        <!-- Painel de Batidas de Ponto -->
+        <div class="space-y-2.5">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Registrar Movimentação</div>
+            
+            <!-- Entrada -->
+            <button onclick="registrarPonto('Entrada')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base group-hover:bg-emerald-100 transition">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-sm font-bold text-slate-800">Entrada</div>
+                        <div class="text-xs text-slate-400 font-medium">Início da jornada diária</div>
+                    </div>
+                </div>
+                <div id="status-entrada" class="text-xs text-slate-400 font-semibold italic">Não registrado</div>
+            </button>
+
+            <!-- Saída Almoço -->
+            <button onclick="registrarPonto('Saída Pausa')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-base group-hover:bg-amber-100 transition">
+                        <i class="fa-solid fa-utensils"></i>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-sm font-bold text-slate-800">Saída Intervalo</div>
+                        <div class="text-xs text-slate-400 font-medium">Pausa para repouso/alimentação</div>
+                    </div>
+                </div>
+                <div id="status-saida-pausa" class="text-xs text-slate-400 font-semibold italic">Não registrado</div>
+            </button>
+
+            <!-- Retorno Almoço -->
+            <button onclick="registrarPonto('Retorno Pausa')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold text-base group-hover:bg-cyan-100 transition">
+                        <i class="fa-solid fa-briefcase"></i>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-sm font-bold text-slate-800">Retorno Intervalo</div>
+                        <div class="text-xs text-slate-400 font-medium">Reinício das atividades</div>
+                    </div>
+                </div>
+                <div id="status-retorno-pausa" class="text-xs text-slate-400 font-semibold italic">Não registrado</div>
+            </button>
+
+            <!-- Saída -->
+            <button onclick="registrarPonto('Saída')" class="w-full bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-xl shadow-sm flex items-center justify-between transition group active:scale-[0.99]">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-base group-hover:bg-rose-100 transition">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-sm font-bold text-slate-800">Saída</div>
+                        <div class="text-xs text-slate-400 font-medium">Fim da jornada diária</div>
+                    </div>
+                </div>
+                <div id="status-saida" class="text-xs text-slate-400 font-semibold italic">Não registrado</div>
+            </button>
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="text-center py-4 text-[10px] text-slate-400 font-bold tracking-wider uppercase bg-slate-100 border-t border-slate-200 mt-6">
+        Sistema Criptografado &bull; Biblioteca do Senado Federal
+    </footer>
+
+    <!-- Lógica JavaScript Interativa e Integração Supabase -->
+    <script>
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('photo-capture');
+        const cameraError = document.getElementById('camera-error');
+        const btnRetake = document.getElementById('btn-retake');
+        
+        let streamAtivo = null;
+        let coordsGps = { lat: null, lng: null };
+
+        // 1. CONFIGURAÇÃO DO SUPABASE
         const SUPABASE_URL = "https://bkkbyaspzmzgonwxvlcc.supabase.co";
         const SUPABASE_KEY = "sb_publishable_ixFc1wuBcJ47PkSG7czu-Q_M9xRC19U";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
