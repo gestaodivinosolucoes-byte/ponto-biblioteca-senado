@@ -261,13 +261,6 @@
     </footer>
 
     <script>
-        // ==========================================================================
-        // CONFIGURAÇÃO DO SUPABASE
-        // Substitua pela sua URL e chave ANON reais (Project Settings > API).
-        // Nunca coloque a service_role key aqui — apenas a anon/public key,
-        // protegida pelas políticas de RLS nas tabelas 'perfis', 'registros_ponto'
-        // e 'solicitacoes_ponto'.
-        // ==========================================================================
         const SUPABASE_URL = 'https://bkkbyaspzmzgonwxvlcc.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_ixFc1wuBcJ47PkSG7czu-Q_M9xRC19U';
 
@@ -280,23 +273,18 @@
         let cameraOk = false;
         let gpsOk = false;
 
-        // Realtime: qualquer nova batida inserida atualiza a tela do estagiário logado
+        // Realtime: atualizações automáticas
         supabaseClient
             .channel('canal-ponto')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registros_ponto' }, () => {
-                if (sessionPerfis && !sessionPerfis.role) checarStatusDoDia();
-                else if (sessionPerfis && sessionPerfis.role !== 'admin') checarStatusDoDia();
+                if (sessionPerfis && sessionPerfis.role !== 'admin') checarStatusDoDia();
             })
             .subscribe();
 
-        // --------------------------------------------------------------------
-        // INICIALIZAÇÃO (ponto único de entrada — evita handlers duplicados)
-        // --------------------------------------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             iniciarRelogio();
             verificarSessao();
 
-            // Enter para logar
             document.getElementById('login-senha').addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') autenticar();
             });
@@ -315,7 +303,6 @@
             }, 1000);
         }
 
-        // Restaura sessão ativa (ex.: usuário atualizou a página)
         async function verificarSessao() {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { gerenciarTelas('login'); return; }
@@ -365,9 +352,6 @@
             }
         }
 
-        // --------------------------------------------------------------------
-        // LOGIN / LOGOUT
-        // --------------------------------------------------------------------
         function alternarVisibilidadeSenha() {
             const campo = document.getElementById('login-senha');
             const icone = document.getElementById('icone-olho');
@@ -396,51 +380,45 @@
 
         function traduzErroAuth(mensagem) {
             if (!mensagem) return 'Não foi possível entrar. Tente novamente.';
-            const m = mensagem.toLowerCase();
+            const m = message.toLowerCase();
             if (m.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
-            if (m.includes('email not confirmed')) return 'E-mail ainda não confirmado. Verifique sua caixa de entrada.';
             return 'Não foi possível entrar: ' + mensagem;
         }
 
-       async function autenticar() {
-    limparErroLogin();
-    const email = document.getElementById('login-email').value.trim();
-    const senha = document.getElementById('login-senha').value;
+        async function autenticar() {
+            limparErroLogin();
+            const email = document.getElementById('login-email').value.trim();
+            const senha = document.getElementById('login-senha').value;
 
-    if (!email || !senha) return mostrarErroLogin('Preencha e-mail e senha.');
+            if (!email || !senha) return mostrarErroLogin('Preencha e-mail e senha.');
 
-    setLoadingLogin(true);
-    try {
-        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
-        if (authError) return mostrarErroLogin(traduzErroAuth(authError.message));
+            setLoadingLogin(true);
+            try {
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+                if (authError) return mostrarErroLogin(traduzErroAuth(authError.message));
 
-        const { data: perfilData, error: perfilError } = await supabaseClient
-            .from('perfis')
-            .select('*')
-            .eq('id', authData.user.id)
-            .single();
+                const { data: perfilData, error: perfilError } = await supabaseClient
+                    .from('perfis').select('*').eq('id', authData.user.id).single();
 
-        if (perfilError || !perfilData) return mostrarErroLogin('Erro ao carregar perfil.');
+                if (perfilError || !perfilData) return mostrarErroLogin('Erro ao carregar perfil.');
 
-        sessionPerfis = perfilData;
-        aplicarPerfilNaTela(perfilData);
-    } catch (err) {
-        mostrarErroLogin('Erro: ' + err.message);
-    } finally {
-        setLoadingLogin(false);
-    }
-}
+                sessionPerfis = perfilData;
+                aplicarPerfilNaTela(perfilData);
+            } catch (err) {
+                mostrarErroLogin('Erro: ' + err.message);
+            } finally {
+                setLoadingLogin(false);
+            }
+        }
 
-async function deslogar() {
-    if (typeof streamAtivo !== 'undefined' && streamAtivo) {
-        streamAtivo.getTracks().forEach(track => track.stop());
-    }
-    await supabaseClient.auth.signOut();
-    location.reload();
+        async function deslogar() {
+            if (streamAtivo) {
+                streamAtivo.getTracks().forEach(track => track.stop());
+            }
+            await supabaseClient.auth.signOut();
+            location.reload();
+        }
 
-        // --------------------------------------------------------------------
-        // CÂMERA E GEOLOCALIZAÇÃO
-        // --------------------------------------------------------------------
         function inicializarCameraEGPS() {
             const video = document.getElementById('webcam');
 
@@ -454,7 +432,7 @@ async function deslogar() {
                     })
                     .catch(() => {
                         cameraOk = false;
-                        alert("Câmera indisponível. Permita o acesso à câmera para registrar o ponto.");
+                        alert("Câmera indisponível. Ative a câmera para bater o ponto.");
                     });
             }
 
@@ -464,176 +442,138 @@ async function deslogar() {
                         coordsGps.lat = pos.coords.latitude;
                         coordsGps.lng = pos.coords.longitude;
                         gpsOk = true;
-                        document.getElementById('badge-geo').className = "text-xs px-2.5 py-0.5 rounded-full font-bold";
-                        document.getElementById('badge-geo').style.background = '#E3F3EC';
-                        document.getElementById('badge-geo').style.color = 'var(--ok)';
-                        document.getElementById('badge-geo').textContent = "OK";
+                        const badge = document.getElementById('badge-geo');
+                        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold";
+                        badge.style.background = '#E3F3EC';
+                        badge.style.color = 'var(--ok)';
+                        badge.textContent = "OK";
                         document.getElementById('geo-text').textContent = "Coordenadas capturadas via GPS";
                         atualizarDisponibilidadeBotoes();
                     },
                     () => {
                         gpsOk = false;
-                        document.getElementById('badge-geo').className = "text-xs px-2.5 py-0.5 rounded-full font-bold";
-                        document.getElementById('badge-geo').style.background = '#FBEAE8';
-                        document.getElementById('badge-geo').style.color = 'var(--danger)';
-                        document.getElementById('badge-geo').textContent = "Falhou";
-                        document.getElementById('geo-text').textContent = "Permita o acesso à localização para bater o ponto.";
+                        const badge = document.getElementById('badge-geo');
+                        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold";
+                        badge.style.background = '#FBEAE8';
+                        badge.style.color = 'var(--danger)';
+                        badge.textContent = "Falhou";
+                        document.getElementById('geo-text').textContent = "Permita a localização para bater o ponto.";
                     }
                 );
-            } else {
-                document.getElementById('geo-text').textContent = "Geolocalização não suportada neste navegador.";
             }
         }
 
-        const BIBLIOTECA_LAT = -15.8003;
-        const BIBLIOTECA_LNG = -47.8790;
-        const RAIO_MAXIMO_METROS = 100;
-
-        function calcularDistancia(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const phi1 = lat1 * Math.PI / 180;
-            const phi2 = lat2 * Math.PI / 180;
-            const dPhi = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dPhi / 2) ** 2 + Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLon / 2) ** 2;
-            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-        }
-
         function gerenciarBotoesEstagiario(ativos, desativos) {
-            ativos.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.disabled = false;
-            });
-            desativos.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.disabled = true;
-            });
+            ativos.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = false; });
+            desativos.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
         }
 
-        // Habilita os botões de ponto somente quando câmera e GPS estiverem prontos
-        // (o status "já registrado hoje" é reaplicado em checarStatusDoDia)
         function atualizarDisponibilidadeBotoes() {
             const ids = ['btn-entrada', 'btn-saida-pausa', 'btn-retorno-pausa', 'btn-saida'];
             if (cameraOk && gpsOk) {
                 gerenciarBotoesEstagiario(ids, []);
-                checarStatusDoDia(); // reaplica bloqueios de batidas já feitas hoje
+                checarStatusDoDia();
             }
         }
 
-        // --------------------------------------------------------------------
-        // REGISTRO DE PONTO
-        // --------------------------------------------------------------------
-        // --- 1. FUNÇÃO PARA CHECAR STATUS E HABILITAR BOTÕES ---
-async function checarStatusDoDia() {
-    if (!sessionPerfis) return;
+        async function checarStatusDoDia() {
+            if (!sessionPerfis) return;
 
-    const hoje = new Date().toISOString().split('T')[0];
-    const { data } = await supabaseClient
-        .from('registros_ponto')
-        .select('*')
-        .eq('matricula', sessionPerfis.matricula)
-        .gte('created_at', `${hoje}T00:00:00`)
-        .order('created_at', { ascending: true });
+            const hoje = new Date().toISOString().split('T')[0];
+            const { data } = await supabaseClient
+                .from('registros_ponto')
+                .select('*')
+                .eq('matricula', sessionPerfis.matricula)
+                .gte('created_at', `${hoje}T00:00:00`)
+                .order('created_at', { ascending: true });
 
-    const mapaTipoParaBotao = {
-        'Entrada': 'btn-entrada',
-        'Saída Pausa': 'btn-saida-pausa',
-        'Retorno Pausa': 'btn-retorno-pausa',
-        'Saida_Final': 'btn-saida'
-    };
+            const mapaTipoParaBotao = {
+                'Entrada': 'btn-entrada',
+                'Saída Pausa': 'btn-saida-pausa',
+                'Retorno Pausa': 'btn-retorno-pausa',
+                'Saida_Final': 'btn-saida'
+            };
 
-    ['status-entrada', 'status-saida-pausa', 'status-retorno-pausa', 'status-saida'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.innerHTML = "Não registrado";
-    });
+            ['status-entrada', 'status-saida-pausa', 'status-retorno-pausa', 'status-saida'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.innerHTML = "Não registrado";
+            });
 
-    if (data) {
-        data.forEach(reg => {
-            const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            if (reg.tipo_batida === 'Entrada') document.getElementById('status-entrada').innerHTML = hFormatada;
-            else if (reg.tipo_batida === 'Saída Pausa') document.getElementById('status-saida-pausa').innerHTML = hFormatada;
-            else if (reg.tipo_batida === 'Retorno Pausa') document.getElementById('status-retorno-pausa').innerHTML = hFormatada;
-            else if (reg.tipo_batida === 'Saida_Final') document.getElementById('status-saida').innerHTML = hFormatada;
-        });
-    }
+            let horaEntrada = null, horaSaidaPausa = null, horaRetornoPausa = null, horaSaidaFinal = null;
 
-    Object.entries(mapaTipoParaBotao).forEach(([tipo, btnId]) => {
-        const btn = document.getElementById(btnId);
-        if (!btn) return;
-        const ultimaBatida = data && data.length > 0 ? data[data.length - 1] : null;
-        const agora = new Date();
-        const jaRegistrado = data && data.some(r => r.tipo_batida === tipo);
-        
-        let bloqueado = jaRegistrado;
-        if (ultimaBatida && tipo !== 'Saida_Final') {
-            const dif = (agora - new Date(ultimaBatida.created_at)) / (1000 * 60);
-            if (dif < 10) bloqueado = true;
+            if (data) {
+                data.forEach(reg => {
+                    const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    if (reg.tipo_batida === 'Entrada') { document.getElementById('status-entrada').innerHTML = hFormatada; horaEntrada = reg.created_at; }
+                    else if (reg.tipo_batida === 'Saída Pausa') { document.getElementById('status-saida-pausa').innerHTML = hFormatada; horaSaidaPausa = reg.created_at; }
+                    else if (reg.tipo_batida === 'Retorno Pausa') { document.getElementById('status-retorno-pausa').innerHTML = hFormatada; horaRetornoPausa = reg.created_at; }
+                    else if (reg.tipo_batida === 'Saida_Final') { document.getElementById('status-saida').innerHTML = hFormatada; horaSaidaFinal = reg.created_at; }
+                });
+            }
+
+            Object.entries(mapaTipoParaBotao).forEach(([tipo, btnId]) => {
+                const btn = document.getElementById(btnId);
+                if (!btn) return;
+                const jaRegistrado = data && data.some(r => r.tipo_batida === tipo);
+                btn.disabled = jaRegistrado;
+                btn.style.opacity = jaRegistrado ? "0.5" : "1";
+            });
+
+            atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal });
         }
-        btn.disabled = bloqueado;
-        btn.style.opacity = bloqueado ? "0.5" : "1";
-    });
-}
 
-// --- 2. FUNÇÃO QUE VOCÊ APAGOU (RECONSTRUÍDA) ---
-async function registrarPonto(tipo) {
-    if (!streamAtivo) return alert("Câmera não está ativa.");
-    
-    // Captura da imagem
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('photo-capture');
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        async function registrarPonto(tipo) {
+            if (!streamAtivo) return alert("Câmera não ativa.");
+            
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('photo-capture');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    canvas.toBlob(async (blob) => {
-        const nArquivo = `ponto_${sessionPerfis.matricula}_${Date.now()}.png`;
-        
-        // Upload da foto
-        const { error: uploadError } = await supabaseClient.storage.from('fotos_ponto').upload(nArquivo, blob);
-        if (uploadError) return alert("Erro foto: " + uploadError.message);
+            canvas.toBlob(async (blob) => {
+                const nArquivo = `ponto_${sessionPerfis.matricula}_${Date.now()}.png`;
+                
+                const { error: uploadError } = await supabaseClient.storage.from('fotos_ponto').upload(nArquivo, blob);
+                if (uploadError) return alert("Erro no upload da foto: " + uploadError.message);
 
-        const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
+                const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
 
-        // Inserção no banco
-        const { error: dbError } = await supabaseClient.from('registros_ponto').insert([{
-            matricula: sessionPerfis.matricula,
-            tipo_batida: tipo,
-            foto_url: pUrl.publicUrl,
-            latitude: coordsGps.lat,
-            longitude: coordsGps.lng
-        }]);
+                const { error: dbError } = await supabaseClient.from('registros_ponto').insert([{
+                    matricula: sessionPerfis.matricula,
+                    tipo_batida: tipo,
+                    foto_url: pUrl.publicUrl,
+                    latitude: coordsGps.lat,
+                    longitude: coordsGps.lng
+                }]);
 
-        if (dbError) return alert("Erro banco: " + dbError.message);
+                if (dbError) return alert("Erro ao salvar no banco: " + dbError.message);
 
-        alert("Ponto registrado com sucesso!");
-        checarStatusDoDia(); // Atualiza os botões após bater
-    }, 'image/png');
-}
+                alert("Ponto registrado com sucesso!");
+                checarStatusDoDia();
+            }, 'image/png');
+        }
 
-// --- 3. CHAMADA INICIAL ---
-checarStatusDoDia();
+        function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal } = {}) {
+            const el = document.getElementById('total-horas-dia');
+            if (!el) return;
+            if (!horaEntrada) { el.textContent = "Total: 0h00m / 6h"; return; }
 
-    atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal });
-}
+            const inicio = new Date(horaEntrada);
+            const fim = horaSaidaFinal ? new Date(horaSaidaFinal) : new Date();
+            let msTotais = fim - inicio;
 
-function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal } = {}) {
-    const el = document.getElementById('total-horas-dia');
-    if (!el) return;
-    if (!horaEntrada) { el.textContent = "Total: 0h00m / 6h"; return; }
+            if (horaSaidaPausa) {
+                const fimPausa = horaRetornoPausa ? new Date(horaRetornoPausa) : new Date();
+                const inicioPausa = new Date(horaSaidaPausa);
+                msTotais -= Math.max(0, fimPausa - inicioPausa);
+            }
 
-    const inicio = new Date(horaEntrada);
-    const fim = horaSaidaFinal ? new Date(horaSaidaFinal) : new Date();
-    let msTotais = fim - inicio;
+            msTotais = Math.max(0, msTotais);
+            const horas = Math.floor(msTotais / 3600000);
+            const minutos = Math.floor((msTotais % 3600000) / 60000);
+            el.textContent = `Total: ${horas}h${String(minutos).padStart(2, '0')}m / 6h`;
+        }
 
-    if (horaSaidaPausa) {
-        const fimPausa = horaRetornoPausa ? new Date(horaRetornoPausa) : new Date();
-        const inicioPausa = new Date(horaSaidaPausa);
-        msTotais -= Math.max(0, fimPausa - inicioPausa);
-    }
-
-    msTotais = Math.max(0, msTotais);
-    const horas = Math.floor(msTotais / 3600000);
-    const minutos = Math.floor((msTotais % 3600000) / 60000);
-    el.textContent = `Total: ${horas}h${String(minutos).padStart(2, '0')}m / 6h`;
-}
         async function enviarSolicitacaoAjuste() {
             const data = document.getElementById('adj-data').value;
             const tipo = document.getElementById('adj-tipo').value;
@@ -664,9 +604,6 @@ function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, ho
             document.getElementById('adj-motivo').value = "";
         }
 
-        // --------------------------------------------------------------------
-        // PAINEL DO ADMINISTRADOR
-        // --------------------------------------------------------------------
         function escapeHtml(str) {
             return String(str ?? '').replace(/[&<>"']/g, c => ({
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -686,31 +623,31 @@ function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, ho
             tabela.innerHTML = "";
 
             if (error) {
-                tabela.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs" style="color:var(--danger)">Erro ao carregar registros: ${escapeHtml(error.message)}</td></tr>`;
+                tabela.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs" style="color:var(--danger)">Erro: ${escapeHtml(error.message)}</td></tr>`;
             } else if (!batidas || batidas.length === 0) {
-                tabela.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs" style="color:var(--ink-muted)">Nenhum registro encontrado.</td></tr>`;
+                tabela.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs" style="color:var(--ink-muted)">Nenhum registro.</td></tr>`;
             } else {
                 batidas.forEach(b => {
                     const dataB = new Date(b.created_at).toLocaleDateString('pt-BR');
                     const horaB = new Date(b.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
                     const mapLink = b.latitude
-                        ? `<a href="https://google.com/maps?q=${b.latitude},${b.longitude}" target="_blank" rel="noopener" class="font-bold" style="color:var(--danger)"><i class="fa-solid fa-map-pin"></i> Mapa</a>`
+                        ? `<a href="https://google.com/maps?q=${b.latitude},${b.longitude}" target="_blank" class="font-bold text-red-700"><i class="fa-solid fa-map-pin"></i> Mapa</a>`
                         : "Sem GPS";
                     const fotoSrc = b.foto_url || 'https://via.placeholder.com/150?text=Sem+Foto';
 
                     tabela.insertAdjacentHTML('beforeend', `
                         <tr class="hover:bg-slate-50">
-                            <td class="p-3 font-bold" style="color:var(--ink)">${escapeHtml(b.matricula)}</td>
-                            <td class="p-3">${escapeHtml(b.tipo_batida)} <br> <span class="text-[10px] font-mono" style="color:var(--ink-muted)">${dataB} às ${horaB}</span></td>
+                            <td class="p-3 font-bold">${escapeHtml(b.matricula)}</td>
+                            <td class="p-3">${escapeHtml(b.tipo_batida)} <br> <span class="text-[10px] font-mono text-gray-500">${dataB} às ${horaB}</span></td>
                             <td class="p-3">
                                 <div class="flex items-center gap-2">
-                                    <a href="${fotoSrc}" target="_blank" rel="noopener">
-                                        <img src="${fotoSrc}" onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=Erro'" class="w-8 h-8 rounded object-cover border shadow-sm">
+                                    <a href="${fotoSrc}" target="_blank">
+                                        <img src="${fotoSrc}" class="w-8 h-8 rounded object-cover border">
                                     </a>
                                     ${mapLink}
                                 </div>
                             </td>
-                            <td class="p-3 text-center space-x-1 whitespace-nowrap">
+                            <td class="p-3 text-center whitespace-nowrap">
                                 <button onclick="abonarRegistro(${b.id}, ${!!b.abonado})" class="px-2 py-1 text-white rounded font-bold text-[10px]" style="background:${b.abonado ? 'var(--warn)' : 'var(--navy)'}">${b.abonado ? 'Abonado' : 'Abonar'}</button>
                                 <button onclick="alterarHorarioPonto(${b.id})" class="px-2 py-1 text-white rounded font-bold text-[10px]" style="background:var(--brass)">Editar</button>
                             </td>
@@ -724,7 +661,7 @@ function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, ho
             sContainer.innerHTML = "";
 
             if (!solicitacoes || solicitacoes.length === 0) {
-                sContainer.innerHTML = `<p class="text-center py-4 text-xs font-medium" style="color:var(--ink-muted)">Nenhuma pendência.</p>`;
+                sContainer.innerHTML = `<p class="text-center py-4 text-xs font-medium text-gray-400">Nenhuma pendência.</p>`;
                 return;
             }
 
@@ -733,15 +670,15 @@ function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, ho
                     <div class="border p-3 rounded-xl space-y-2" style="background:#F6F5F1; border-color:#E7E4DA">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h4 class="font-bold text-xs" style="color:var(--ink)">${escapeHtml(s.nome_estagiario)}</h4>
-                                <p class="text-[10px] font-mono" style="color:var(--ink-muted)">${escapeHtml(s.matricula)}</p>
+                                <h4 class="font-bold text-xs">${escapeHtml(s.nome_estagiario)}</h4>
+                                <p class="text-[10px] font-mono text-gray-400">${escapeHtml(s.matricula)}</p>
                             </div>
-                            <span class="text-[10px] font-black px-1.5 py-0.5 rounded" style="background:#E9E4D6; color:var(--navy)">${escapeHtml(s.tipo_batida)}</span>
+                            <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-gray-200 text-slate-800">${escapeHtml(s.tipo_batida)}</span>
                         </div>
-                        <p class="text-[11px] bg-white p-1.5 border rounded" style="color:var(--ink); border-color:#E7E4DA"><strong>Ajuste:</strong> ${escapeHtml(s.data_ponto)} às ${escapeHtml(s.horario_sugerido)}<br><strong>Motivo:</strong> ${escapeHtml(s.motivo)}</p>
+                        <p class="text-[11px] bg-white p-1.5 border rounded"><strong>Ajuste:</strong> ${escapeHtml(s.data_ponto)} às ${escapeHtml(s.horario_sugerido)}<br><strong>Motivo:</strong> ${escapeHtml(s.motivo)}</p>
                         <div class="flex gap-2">
-                            <button onclick="responderSolicitacao(${s.id}, 'aprovado', '${escapeHtml(s.matricula)}', '${escapeHtml(s.data_ponto)}', '${escapeHtml(s.horario_sugerido)}', '${escapeHtml(s.tipo_batida)}')" class="flex-1 py-1 text-white text-[10px] font-bold rounded" style="background:var(--ok)">Aprovar</button>
-                            <button onclick="responderSolicitacao(${s.id}, 'rejeitado')" class="flex-1 py-1 text-white text-[10px] font-bold rounded" style="background:var(--danger)">Rejeitar</button>
+                            <button onclick="responderSolicitacao(${s.id}, 'aprovado', '${escapeHtml(s.matricula)}', '${escapeHtml(s.data_ponto)}', '${escapeHtml(s.horario_sugerido)}', '${escapeHtml(s.tipo_batida)}')" class="flex-1 py-1 text-white text-[10px] font-bold rounded bg-emerald-600">Aprovar</button>
+                            <button onclick="responderSolicitacao(${s.id}, 'rejeitado')" class="flex-1 py-1 text-white text-[10px] font-bold rounded bg-rose-600">Rejeitar</button>
                         </div>
                     </div>
                 `);
@@ -765,7 +702,7 @@ function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, ho
             if (!nH) return;
 
             const novaData = new Date(nH);
-            if (isNaN(novaData.getTime())) return alert("Data/hora inválida. Use o formato AAAA-MM-DDTHH:MM:SS.");
+            if (isNaN(novaData.getTime())) return alert("Data/hora inválida.");
 
             const { error } = await supabaseClient.from('registros_ponto')
                 .update({ created_at: novaData.toISOString(), editado_por_admin_id: sessionUser.id })
@@ -789,7 +726,7 @@ function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, ho
                     foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
                 }]);
 
-                if (insertError) return alert("Erro ao salvar ajuste no banco: " + insertError.message);
+                if (insertError) return alert("Erro ao salvar ajuste: " + insertError.message);
             }
 
             const { error: updateError } = await supabaseClient
@@ -797,9 +734,9 @@ function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, ho
                 .update({ status: status })
                 .eq('id', id);
 
-            if (updateError) return alert("Erro ao atualizar status: " + updateError.message);
+            if (updateError) return alert("Erro: " + updateError.message);
 
-            alert(`Solicitação processada com sucesso!`);
+            alert(`Solicitação processada!`);
             carregarDadosPainelAdmin();
         }
 
