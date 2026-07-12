@@ -346,31 +346,70 @@
     });
 }
         async function registrarPonto(tipo) {
-            if (!streamAtivo || !coordsGps.lat) return alert("Câmera ou GPS pendentes.");
-            let tipoFinal = tipo;
-            if(calcularDistancia(coordsGps.lat, coordsGps.lng, BIBLIOTECA_LAT, BIBLIOTECA_LNG) > RAIO_MAXIMO_METROS) {
-                if(!confirm(`Fora do perímetro regulamentar. Gravar assim mesmo?`)) return;
-                tipoFinal = `${tipo} (Fora do Perímetro)`;
-            }
+    // 1. Verificação de permissões e estados
+    if (!streamAtivo) return alert("Câmera não está ativa. Aguarde...");
+    if (!coordsGps.lat) return alert("Aguardando GPS...");
 
-            const video = document.getElementById('webcam');
-            const canvas = document.getElementById('photo-capture');
-            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    // 2. Prevenção de duplicidade: Verifica no banco se o tipo já existe hoje
+    const hoje = new Date().toISOString().split('T')[0];
+    const { data: batidasHoje } = await supabaseClient
+        .from('registros_ponto')
+        .select('tipo_batida')
+        .eq('matricula', sessionPerfis.matricula)
+        .gte('created_at', `${hoje}T00:00:00`);
 
-            canvas.toBlob(async (blob) => {
-                const nArquivo = `ponto_${Date.now()}.png`;
-                await supabaseClient.storage.from('fotos_ponto').upload(nArquivo, blob, { contentType: 'image/png' });
-                const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
+    // Verifica se já existe um registro que contenha o nome do tipo atual
+    const jaRegistrado = batidasHoje?.some(r => r.tipo_batida.includes(tipo));
+    if (jaRegistrado) {
+        return alert(`O ponto "${tipo}" já foi registrado hoje.`);
+    }
 
-                await supabaseClient.from('registros_ponto').insert([{
-                    matricula: sessionPerfis.matricula, tipo_batida: tipoFinal,
-                    latitude: coordsGps.lat, longitude: coordsGps.lng, foto_url: pUrl.publicUrl
-                }]);
-                alert("Ponto registrado com sucesso!"); checarStatusDoDia();
-            }, 'image/png');
-        }
+    // 3. Lógica de Perímetro
+    let tipoFinal = tipo;
+    if (calcularDistancia(coordsGps.lat, coordsGps.lng, BIBLIOTECA_LAT, BIBLIOTECA_LNG) > RAIO_MAXIMO_METROS) {
+        if (!confirm(`Fora do perímetro regulamentar. Gravar assim mesmo?`)) return;
+        tipoFinal = `${tipo} (Fora do Perímetro)`;
+    }
 
+    // 4. Captura da Imagem
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('photo-capture');
+    
+    // Garantir que o canvas tenha o tamanho correto
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // 5. Upload e Gravação
+    canvas.toBlob(async (blob) => {
+        if (!blob) return alert("Erro ao processar imagem.");
+
+        const nArquivo = `ponto_${sessionPerfis.matricula}_${Date.now()}.png`;
+        
+        const { error: uploadError } = await supabaseClient.storage
+            .from('fotos_ponto')
+            .upload(nArquivo, blob, { contentType: 'image/png' });
+
+        if (uploadError) return alert("Erro ao enviar foto: " + uploadError.message);
+
+        const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
+
+        const { error: dbError } = await supabaseClient.from('registros_ponto').insert([{
+            matricula: sessionPerfis.matricula,
+            tipo_batida: tipoFinal,
+            latitude: coordsGps.lat,
+            longitude: coordsGps.lng,
+            foto_url: pUrl.publicUrl
+        }]);
+
+        if (dbError) return alert("Erro ao salvar no banco: " + dbError.message);
+
+        alert("Ponto registrado com sucesso!");
+        
+        // Atualiza a interface mantendo a câmera ativa
+        checarStatusDoDia();
+    }, 'image/png');
+}
         async function enviarSolicitacaoAjuste() {
             const data = document.getElementById('adj-data').value;
             const tipo = document.getElementById('adj-tipo').value;
