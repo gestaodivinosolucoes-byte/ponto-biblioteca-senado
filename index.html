@@ -201,9 +201,17 @@
         let streamAtivo = null;
         let coordsGps = { lat: null, lng: null };
 
-        const SUPABASE_URL = "https://bkkbyaspzmzgonwxvlcc.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_ixFc1wuBcJ47PkSG7czu-Q_M9xRC19U";
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Substitua pela sua nova chave após regenerar
+const SUPABASE_URL = 'https://bkkbyaspzmzgonwxvlcc.supabase.co';
+const SUPABASE_ANON_KEY = 'SUA_NOVA_CHAVE_AQUI';
+
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true // Essencial para manter o login após F5
+    }
+});
 
         setInterval(() => {
             const agora = new Date();
