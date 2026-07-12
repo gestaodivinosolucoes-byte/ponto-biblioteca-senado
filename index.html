@@ -60,9 +60,8 @@
         </div>
     </section>
 
-    <!-- 2. PAINEL DO ESTAGIÁRIO (Fica totalmente oculto para o Admin) -->
+    <!-- 2. PAINEL DO ESTAGIÁRIO -->
     <section id="view-estagiario" class="hidden flex-1 max-w-md mx-auto w-full px-4 py-6 flex flex-col space-y-5">
-        <!-- Bloco de Identificação Dinâmica -->
         <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
             <div class="flex items-center space-x-4">
                 <div id="user-avatar-char" class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold backdrop-blur-sm">--</div>
@@ -123,7 +122,7 @@
             </button>
         </div>
 
-        <!-- SOLICITAÇÃO DE AJUSTE MANUAL (ALOCADA EXCLUSIVAMENTE AQUI DENTRO) -->
+        <!-- Solicitação de Ajuste Manual -->
         <div class="bg-slate-100 rounded-2xl p-4 border border-slate-200 space-y-3">
             <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider"><i class="fa-solid fa-pen-to-square mr-1"></i> Solicitar Ajuste de Ponto</h3>
             <div class="grid grid-cols-2 gap-2">
@@ -148,7 +147,7 @@
         <div class="bg-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <span class="text-xs bg-indigo-500/30 text-indigo-300 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Gestão Central</span>
-                <h2 class="text-2xl font-black mt-1">Painel do Administrador</h2>
+                <h2 class="text-2xl font-black mt-1">Painel do Administrator</h2>
                 <p class="text-xs text-slate-400">Monitore batidas, valide correções eletrônicas e emita relatórios regulamentares</p>
             </div>
             <button onclick="baixarFolhaPonto()" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition shadow-lg shadow-indigo-900/30">
@@ -156,7 +155,6 @@
             </button>
         </div>
 
-        <!-- Filtros Gerenciais -->
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-1">Filtrar por Matrícula do Estagiário</label>
@@ -169,7 +167,6 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Tabela Principal de Batidas -->
             <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div class="p-4 border-b border-slate-100 bg-slate-50 font-bold text-xs text-slate-700 uppercase tracking-wider">Histórico Geral de Registros</div>
                 <div class="overflow-x-auto">
@@ -182,41 +179,32 @@
                                 <th class="p-3 text-center">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-tabela-ponto" class="divide-y divide-slate-100">
-                            <!-- Injetado dinamicamente -->
-                        </tbody>
+                        <tbody id="admin-tabela-ponto" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Central de Validação de Pedidos/Ajustes -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-4">
                 <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider pb-2 border-b border-slate-100"><i class="fa-solid fa-bell-concierge text-indigo-500 mr-1.5"></i> Solicitações Pendentes</h3>
-                <div id="admin-solicitacoes-container" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-                    <!-- Injetado dinamicamente -->
-                </div>
+                <div id="admin-solicitacoes-container" class="space-y-3 max-h-[500px] overflow-y-auto pr-1"></div>
             </div>
         </div>
     </section>
 
-    <!-- Rodapé -->
     <footer class="text-center py-4 text-[10px] text-slate-400 font-bold bg-slate-100 border-t border-slate-200 mt-6">
         Sistema Criptografado &bull; Biblioteca do Senado Federal
     </footer>
 
-    <!-- Lógica JavaScript Dinâmica -->
     <script>
         let sessionUser = null;
         let sessionPerfis = null;
         let streamAtivo = null;
         let coordsGps = { lat: null, lng: null };
 
-        // CONFIGURAÇÕES DO SEU SUPABASE
         const SUPABASE_URL = "https://bkkbyaspzmzgonwxvlcc.supabase.co";
         const SUPABASE_KEY = "sb_publishable_ixFc1wuBcJ47PkSG7czu-Q_M9xRC19U";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Relógio e Data Operacional
         setInterval(() => {
             const agora = new Date();
             const relogio = document.getElementById('live-clock');
@@ -225,7 +213,6 @@
             if(data) data.textContent = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }, 1000);
 
-        // Controle de Estado de Telas Visuais - CORRIGIDO (Oculta o painel do estagiário inteiramente para o Admin)
         function gerenciarTelas(telaAtiva) {
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-estagiario').classList.add('hidden');
@@ -242,7 +229,6 @@
             } else if (telaAtiva === 'admin') {
                 document.getElementById('view-admin').classList.remove('hidden');
                 document.getElementById('btn-logout').classList.remove('hidden');
-                
                 if (streamAtivo) {
                     streamAtivo.getTracks().forEach(track => track.stop());
                     streamAtivo = null;
@@ -251,29 +237,18 @@
             }
         }
 
-        // Fluxo de Autenticação Supabase Auth
         async function autenticar() {
             const email = document.getElementById('login-email').value;
             const senha = document.getElementById('login-senha').value;
-
             if(!email || !senha) return alert("Preencha todos os campos!");
 
             const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
             if (authError) return alert("Erro no login: " + authError.message);
 
             sessionUser = authData.user;
+            const { data: perfilData } = await supabaseClient.from('perfis').select('*').eq('id', sessionUser.id).single();
 
-            const { data: perfilData, error: perfilError } = await supabaseClient
-                .from('perfis')
-                .select('*')
-                .eq('id', sessionUser.id)
-                .single();
-
-            if (perfilError || !perfilData) {
-                alert("Perfil funcional não configurado no banco. Contate suporte.");
-                return;
-            }
-
+            if (!perfilData) return alert("Perfil funcional não configurado.");
             sessionPerfis = perfilData;
 
             if (perfilData.role === 'admin') {
@@ -288,28 +263,21 @@
 
         async function deslogar() {
             await supabaseClient.auth.signOut();
-            sessionUser = null;
-            sessionPerfis = null;
-            if (streamAtivo) {
-                streamAtivo.getTracks().forEach(track => track.stop());
-                streamAtivo = null;
-            }
+            sessionUser = null; sessionPerfis = null;
+            if (streamAtivo) streamAtivo.getTracks().forEach(track => track.stop());
             gerenciarTelas('login');
         }
 
-        // Câmera e GPS
         function inicializarCameraEGPS() {
             const video = document.getElementById('webcam');
             if (navigator.mediaDevices && !streamAtivo) {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
                     .then(stream => { streamAtivo = stream; video.srcObject = stream; })
-                    .catch(() => alert("Câmera indisponível. Permita acesso para registrar pontos."));
+                    .catch(() => alert("Câmera indisponível. Permita o acesso."));
             }
-
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(pos => {
-                    coordsGps.lat = pos.coords.latitude;
-                    coordsGps.lng = pos.coords.longitude;
+                    coordsGps.lat = pos.coords.latitude; coordsGps.lng = pos.coords.longitude;
                     document.getElementById('badge-geo').className = "text-xs bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold";
                     document.getElementById('badge-geo').textContent = "OK";
                     document.getElementById('geo-text').textContent = "Coordenadas capturadas via GPS";
@@ -317,13 +285,9 @@
             }
         }
 
-        const BIBLIOTECA_LAT = -15.8003;
-        const BIBLIOTECA_LNG = -47.8790;
-        const RAIO_MAXIMO_METROS = 100;
-
+        const BIBLIOTECA_LAT = -15.8003; const BIBLIOTECA_LNG = -47.8790; const RAIO_MAXIMO_METROS = 100;
         function calcularDistancia(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const phi1 = lat1 * Math.PI / 180; const phi2 = lat2 * Math.PI / 180;
+            const R = 6371e3; const phi1 = lat1 * Math.PI / 180; const phi2 = lat2 * Math.PI / 180;
             const dPhi = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dPhi/2) * Math.sin(dPhi/2) + Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLon/2) * Math.sin(dLon/2);
             return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
@@ -337,10 +301,7 @@
         async function checarStatusDoDia() {
             if(!sessionPerfis) return;
             const hoje = new Date().toISOString().split('T')[0];
-            const inicioDia = new Date(`${hoje}T00:00:00`).toISOString();
-
-            const { data } = await supabaseClient.from('registros_ponto')
-                .select('*').eq('matricula', sessionPerfis.matricula).gte('created_at', inicioDia).order('created_at', { ascending: true });
+            const { data } = await supabaseClient.from('registros_ponto').select('*').eq('matricula', sessionPerfis.matricula).gte('created_at', `${hoje}T00:00:00`).order('created_at', { ascending: true });
 
             const container = document.getElementById('historico-container');
             container.innerHTML = "";
@@ -352,34 +313,25 @@
                 return;
             }
 
-            let horarioEntrada = null, horarioSaidaPausa = null, horarioRetornoPausa = null, horarioSaida = null;
-            const batidasHoje = [];
-
+            let batidasHoje = [];
             data.forEach(reg => {
                 batidasHoje.push(reg.tipo_batida);
                 const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                
-                if (reg.tipo_batida.includes('Entrada')) horarioEntrada = new Date(reg.created_at);
-                else if (reg.tipo_batida.includes('Saída Pausa')) horarioSaidaPausa = new Date(reg.created_at);
-                else if (reg.tipo_batida.includes('Retorno Pausa')) horarioRetornoPausa = new Date(reg.created_at);
-                else if (reg.tipo_batida.includes('Saída')) horarioSaida = new Date(reg.created_at);
-
                 let badgeAbono = reg.abonado ? `<span class="text-[9px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded ml-1">ABONADO</span>` : "";
 
                 container.insertAdjacentHTML('beforeend', `
                     <div class="flex items-center justify-between p-2 bg-slate-50 rounded-xl border border-slate-100 shadow-sm">
                         <div class="flex items-center gap-2">
-                            <img src="${reg.foto_url || 'https://via.placeholder.com/150'}" class="w-8 h-8 rounded object-cover shadow-sm">
-                            <div>
-                                <p class="font-bold text-slate-800 text-xs">${reg.tipo_batida} ${badgeAbono}</p>
-                            </div>
+                            <img src="${reg.foto_url || 'https://via.placeholder.com/150?text=Sem+Foto'}" class="w-8 h-8 rounded object-cover shadow-sm">
+                            <p class="font-bold text-slate-800 text-xs">${reg.tipo_batida} ${badgeAbono}</p>
                         </div>
                         <span class="text-xs font-black text-indigo-600 bg-white px-2 py-0.5 rounded border border-slate-100">${hFormatada}</span>
                     </div>
                 `);
 
                 let idStatus = reg.tipo_batida.includes('Entrada') ? 'status-entrada' : reg.tipo_batida.includes('Saída Pausa') ? 'status-saida-pausa' : reg.tipo_batida.includes('Retorno Pausa') ? 'status-retorno-pausa' : 'status-saida';
-                document.getElementById(idStatus).innerHTML = `<span class="text-emerald-600 font-bold text-xs"><i class="fa-solid fa-circle-check"></i> ${hFormatada}</span>`;
+                const elStatus = document.getElementById(idStatus);
+                if(elStatus) elStatus.innerHTML = `<span class="text-emerald-600 font-bold text-xs"><i class="fa-solid fa-circle-check"></i> ${hFormatada}</span>`;
             });
 
             const temEntrada = batidasHoje.some(b => b.includes('Entrada'));
@@ -387,9 +339,8 @@
             const temRetorno = batidasHoje.some(b => b.includes('Retorno Pausa'));
             const temSaida = batidasHoje.some(b => b.includes('Saída') && !b.includes('Pausa'));
 
-            if (temSaida) {
-                gerenciarBotoesEstagiario([], ['btn-entrada', 'btn-saida-pausa', 'btn-retorno-pausa', 'btn-saida']);
-            } else if (temEntrada) {
+            if (temSaida) gerenciarBotoesEstagiario([], ['btn-entrada', 'btn-saida-pausa', 'btn-retorno-pausa', 'btn-saida']);
+            else if (temEntrada) {
                 if (!temPausa) gerenciarBotoesEstagiario(['btn-saida-pausa', 'btn-saida'], ['btn-entrada', 'btn-retorno-pausa']);
                 else if (temPausa && !temRetorno) gerenciarBotoesEstagiario(['btn-retorno-pausa', 'btn-saida'], ['btn-entrada', 'btn-saida-pausa']);
                 else if (temRetorno) gerenciarBotoesEstagiario(['btn-saida'], ['btn-entrada', 'btn-saida-pausa', 'btn-retorno-pausa']);
@@ -398,19 +349,16 @@
 
         async function registrarPonto(tipo) {
             if (!streamAtivo || !coordsGps.lat) return alert("Câmera ou GPS pendentes.");
-            
             let tipoFinal = tipo;
-            const dist = calcularDistancia(coordsGps.lat, coordsGps.lng, BIBLIOTECA_LAT, BIBLIOTECA_LNG);
-            if(dist > RAIO_MAXIMO_METROS) {
-                if(!confirm(`Você está fora do perímetro regulamentar. Gravar como "Fora do Perímetro"?`)) return;
+            if(calcularDistancia(coordsGps.lat, coordsGps.lng, BIBLIOTECA_LAT, BIBLIOTECA_LNG) > RAIO_MAXIMO_METROS) {
+                if(!confirm(`Fora do perímetro regulamentar. Gravar assim mesmo?`)) return;
                 tipoFinal = `${tipo} (Fora do Perímetro)`;
             }
 
             const video = document.getElementById('webcam');
             const canvas = document.getElementById('photo-capture');
-            const ctx = canvas.getContext('2d');
             canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
             canvas.toBlob(async (blob) => {
                 const nArquivo = `ponto_${Date.now()}.png`;
@@ -418,15 +366,10 @@
                 const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
 
                 await supabaseClient.from('registros_ponto').insert([{
-                    matricula: sessionPerfis.matricula,
-                    tipo_batida: tipoFinal,
-                    latitude: coordsGps.lat,
-                    longitude: coordsGps.lng,
-                    foto_url: pUrl.publicUrl
+                    matricula: sessionPerfis.matricula, tipo_batida: tipoFinal,
+                    latitude: coordsGps.lat, longitude: coordsGps.lng, foto_url: pUrl.publicUrl
                 }]);
-
-                alert("Ponto registrado com sucesso!");
-                checarStatusDoDia();
+                alert("Ponto registrado com sucesso!"); checarStatusDoDia();
             }, 'image/png');
         }
 
@@ -435,56 +378,47 @@
             const tipo = document.getElementById('adj-tipo').value;
             const hora = document.getElementById('adj-hora').value;
             const motivo = document.getElementById('adj-motivo').value;
-
-            if(!data || !hora || !motivo) return alert("Preencha todos os dados da solicitação!");
+            if(!data || !hora || !motivo) return alert("Preencha todos os dados!");
 
             await supabaseClient.from('solicitacoes_ponto').insert([{
-                usuario_id: sessionUser.id,
-                matricula: sessionPerfis.matricula,
-                nome_estagiario: sessionPerfis.nome,
-                data_ponto: data,
-                tipo_batida: tipo,
-                horario_sugerido: hora,
-                motivo: motivo
+                usuario_id: sessionUser.id, matricula: sessionPerfis.matricula,
+                nome_estagiario: sessionPerfis.nome, data_ponto: data, tipo_batida: tipo,
+                horario_sugerido: hora, motivo: motivo
             }]);
-
-            alert("Solicitação enviada ao administrador!");
-            document.getElementById('adj-motivo').value = "";
+            alert("Solicitação enviada!"); document.getElementById('adj-motivo').value = "";
         }
 
-        // Central do Administrador
+        // Correção das imagens e injeção do reajuste corrigido
         async function carregarDadosPainelAdmin() {
             const fMatricula = document.getElementById('filtro-matricula').value;
             const fData = document.getElementById('filtro-data').value;
 
             let query = supabaseClient.from('registros_ponto').select('*').order('created_at', { ascending: false });
             if(fMatricula) query = query.eq('matricula', fMatricula);
-            if(fData) {
-                query = query.gte('created_at', `${fData}T00:00:00`).lte('created_at', `${fData}T23:59:59`);
-            }
+            if(fData) query = query.gte('created_at', `${fData}T00:00:00`).lte('created_at', `${fData}T23:59:59`);
             
             const { data: batidas } = await query;
-            const tabela = document.getElementById('admin-tabela-ponto');
-            tabela.innerHTML = "";
+            const tabela = document.getElementById('admin-tabela-ponto'); tabela.innerHTML = "";
 
             if(batidas) {
                 batidas.forEach(b => {
                     const dataB = new Date(b.created_at).toLocaleDateString('pt-BR');
                     const horaB = new Date(b.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-                    const mapLink = b.latitude ? `<a href="https://google.com/maps?q=${b.latitude},${b.longitude}" target="_blank" class="text-rose-500 hover:underline"><i class="fa-solid fa-map-pin"></i> Mapa</a>` : "Sem GPS";
+                    const mapLink = b.latitude ? `<a href="https://google.com/maps?q=${b.latitude},${b.longitude}" target="_blank" class="text-rose-500 font-bold"><i class="fa-solid fa-map-pin"></i> Mapa</a>` : "Sem GPS";
+                    const fotoSrc = b.foto_url ? b.foto_url : 'https://via.placeholder.com/150?text=Sem+Foto';
                     
                     tabela.insertAdjacentHTML('beforeend', `
                         <tr class="hover:bg-slate-50">
                             <td class="p-3 font-bold text-slate-700">${b.matricula}</td>
                             <td class="p-3">${b.tipo_batida} <br> <span class="text-[10px] text-slate-400 font-mono">${dataB} às ${horaB}</span></td>
                             <td class="p-3 flex items-center gap-2">
-                                <img src="${b.foto_url}" class="w-8 h-8 rounded object-cover border">
+                                <a href="${fotoSrc}" target="_blank">
+                                    <img src="${fotoSrc}" class="w-8 h-8 rounded object-cover border shadow-sm onerror="this.src='https://via.placeholder.com/150?text=Erro'">
+                                </a>
                                 ${mapLink}
                             </td>
                             <td class="p-3 text-center space-x-1">
-                                <button onclick="abonarRegistro(${b.id}, ${b.abonado})" class="px-2 py-1 ${b.abonado ? 'bg-amber-500' : 'bg-slate-700'} text-white rounded font-bold text-[10px]">
-                                    ${b.abonado ? 'Abonado' : 'Abonar'}
-                                </button>
+                                <button onclick="abonarRegistro(${b.id}, ${b.abonado})" class="px-2 py-1 ${b.abonado ? 'bg-amber-500' : 'bg-slate-700'} text-white rounded font-bold text-[10px]">${b.abonado ? 'Abonado' : 'Abonar'}</button>
                                 <button onclick="alterarHorarioPonto(${b.id})" class="px-2 py-1 bg-indigo-600 text-white rounded font-bold text-[10px]">Editar</button>
                             </td>
                         </tr>
@@ -493,8 +427,7 @@
             }
 
             const { data: solicitacoes } = await supabaseClient.from('solicitacoes_ponto').select('*').eq('status', 'pendente');
-            const sContainer = document.getElementById('admin-solicitacoes-container');
-            sContainer.innerHTML = "";
+            const sContainer = document.getElementById('admin-solicitacoes-container'); sContainer.innerHTML = "";
 
             if(!solicitacoes || solicitacoes.length === 0) {
                 sContainer.innerHTML = `<p class="text-center py-4 text-xs text-slate-400 font-medium">Nenhuma pendência.</p>`;
@@ -522,37 +455,33 @@
         }
 
         async function abonarRegistro(id, estadoAtual) {
-            const justificativa = estadoAtual ? null : prompt("Insira o motivo/justificativa legal do abono:");
+            const justificativa = estadoAtual ? null : prompt("Insira a justificativa legal do abono:");
             if(!estadoAtual && !justificativa) return;
-
             await supabaseClient.from('registros_ponto').update({ abonado: !estadoAtual, justificativa_abono: justificativa }).eq('id', id);
-            alert("Abono atualizado!");
             carregarDadosPainelAdmin();
         }
 
         async function alterarHorarioPonto(id) {
-            const novoHorario = prompt("Digite o novo horário no padrão ISO (Exemplo: 2026-07-11T14:30:00Z):");
-            if(!novoHorario) return;
-
-            await supabaseClient.from('registros_ponto').update({ created_at: novoHorario, editado_por_admin_id: sessionUser.id }).eq('id', id);
-            alert("Horário alterado pelo administrador.");
-            carregarDadosPainelAdmin();
+            const nH = prompt("Novo horário no padrão ISO (Exemplo: 2026-07-12T14:30:00):");
+            if(!nH) return;
+            await supabaseClient.from('registros_ponto').update({ created_at: new Date(nH).toISOString(), editado_por_admin_id: sessionUser.id }).eq('id', id);
+            alert("Horário alterado."); carregarDadosPainelAdmin();
         }
 
+        // ATALHO COMPATÍVEL COM CORREÇÃO DE HORÁRIO DO BANCO
         async function responderSolicitacao(id, status, matricula, data, hora, tipo) {
             if (status === 'aprovado') {
-                const timestampGerado = `${data}T${hora}:00.000Z`;
+                // Força a montagem no fuso local transformando em ISO estrito
+                const dataMontada = new Date(`${data}T${hora}:00`);
                 await supabaseClient.from('registros_ponto').insert([{
                     matricula: matricula,
                     tipo_batida: `${tipo} (Ajuste Manual)`,
-                    created_at: timestampGerado,
+                    created_at: dataMontada.toISOString(),
                     foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
                 }]);
             }
-            
             await supabaseClient.from('solicitacoes_ponto').update({ status: status }).eq('id', id);
-            alert(`Solicitação ${status} com sucesso!`);
-            carregarDadosPainelAdmin();
+            alert(`Solicitação processada!`); carregarDadosPainelAdmin();
         }
 
         async function baixarFolhaPonto() {
@@ -561,23 +490,15 @@
             if(fMatricula) query = query.eq('matricula', fMatricula);
             
             const { data } = await query;
-            if(!data || data.length === 0) return alert("Nenhum dado localizado para exportar.");
+            if(!data || data.length === 0) return alert("Nenhum dado localizado.");
 
-            let csvContent = "data:text/csv;charset=utf-8,Matricula,Tipo Batida,Data/Hora Original,Abonado,Justificativa\n";
-            data.forEach(r => {
-                csvContent += `${r.matricula},"${r.tipo_batida}","${r.created_at}",${r.abonado},"${r.justificativa_abono || ''}"\n`;
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            let csv = "data:text/csv;charset=utf-8,Matricula,Tipo Batida,Data/Hora Original,Abonado,Justificativa\n";
+            data.forEach(r => { csv += `${r.matricula},"${r.tipo_batida}","${r.created_at}",${r.abonado},"${r.justificativa_abono || ''}"\n`; });
+            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv));
             link.setAttribute("download", `Folha_Ponto_${fMatricula || 'Geral'}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // Inicializa na Tela de Login
         window.addEventListener('DOMContentLoaded', () => gerenciarTelas('login'));
     </script>
 </body>
