@@ -263,24 +263,28 @@ window.onload = () => {
             }
         }
 
-        async function autenticar() {
-    console.log("Função autenticar foi chamada!"); // Adicione este log para testar
-    const email = document.getElementById('login-email').value;
-    const senha = document.getElementById('login-senha').value;
+        // Garanta que esta função esteja na raiz do arquivo, sem estar dentro de { } de outra coisa
+async function autenticar() {
+    console.log("Teste: autenticar chamado!");
     
-    if (!email || !senha) return alert("Preencha todos os campos!");
+    const campoEmail = document.getElementById('login-email');
+    const campoSenha = document.getElementById('login-senha');
 
-    try {
-        // 1. Tenta autenticar
-        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ 
-            email: email, 
-            password: senha 
-        });
+    if (!campoEmail || !campoSenha) {
+        console.error("Campos de login não encontrados no HTML!");
+        return;
+    }
 
-        if (authError) {
-            console.error("Erro no Auth:", authError);
-            return alert("Erro no login: " + authError.message);
-        }
+    const email = campoEmail.value;
+    const senha = campoSenha.value;
+
+    if (!email || !senha) {
+        alert("Preencha todos os campos!");
+        return;
+    }
+
+    // ... restante da lógica de login ...
+}
 
         // 2. Se chegou aqui, o login foi aceito pelo Supabase
         sessionUser = authData.user;
