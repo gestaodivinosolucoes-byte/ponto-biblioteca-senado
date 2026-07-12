@@ -402,64 +402,41 @@
             return 'Não foi possível entrar: ' + mensagem;
         }
 
-        async function autenticar() {
-            limparErroLogin();
+       async function autenticar() {
+    limparErroLogin();
+    const email = document.getElementById('login-email').value.trim();
+    const senha = document.getElementById('login-senha').value;
 
-            const email = document.getElementById('login-email').value.trim();
-            const senha = document.getElementById('login-senha').value;
+    if (!email || !senha) return mostrarErroLogin('Preencha e-mail e senha.');
 
-            if (!email || !senha) {
-                mostrarErroLogin('Preencha e-mail e senha.');
-                return;
-            }
+    setLoadingLogin(true);
+    try {
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+        if (authError) return mostrarErroLogin(traduzErroAuth(authError.message));
 
-            setLoadingLogin(true);
-            try {
-                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
-                    email, password: senha
-                });
+        const { data: perfilData, error: perfilError } = await supabaseClient
+            .from('perfis')
+            .select('*')
+            .eq('id', authData.user.id)
+            .single();
 
-                if (authError) {
-                    mostrarErroLogin(traduzErroAuth(authError.message));
-                    return;
-                }
+        if (perfilError || !perfilData) return mostrarErroLogin('Erro ao carregar perfil.');
 
-                sessionUser = authData.user;
+        sessionPerfis = perfilData;
+        aplicarPerfilNaTela(perfilData);
+    } catch (err) {
+        mostrarErroLogin('Erro: ' + err.message);
+    } finally {
+        setLoadingLogin(false);
+    }
+}
 
-                const { data: perfilData, error: perfilError } = await supabaseClient
-                    .from('perfis')
-                    .select('*')
-                    .eq('id', sessionUser.id)
-                    .single();
-
-                if (perfilError || !perfilData) {
-                    mostrarErroLogin('Login OK, mas não foi possível carregar o perfil do usuário.');
-                    return;
-                }
-
-                sessionPerfis = perfilData;
-                document.getElementById('login-email').value = '';
-                document.getElementById('login-senha').value = '';
-                aplicarPerfilNaTela(perfilData);
-            } catch (err) {
-                mostrarErroLogin('Erro inesperado: ' + err.message);
-            } finally {
-                setLoadingLogin(false);
-            }
-        }
-
-        async function deslogar() {
-            if (streamAtivo) {
-                streamAtivo.getTracks().forEach(track => track.stop());
-                streamAtivo = null;
-            }
-            await supabaseClient.auth.signOut();
-            sessionUser = null;
-            sessionPerfis = null;
-            cameraOk = false;
-            gpsOk = false;
-            gerenciarTelas('login');
-        }
+async function deslogar() {
+    if (typeof streamAtivo !== 'undefined' && streamAtivo) {
+        streamAtivo.getTracks().forEach(track => track.stop());
+    }
+    await supabaseClient.auth.signOut();
+    location.reload();
 
         // --------------------------------------------------------------------
         // CÂMERA E GEOLOCALIZAÇÃO
