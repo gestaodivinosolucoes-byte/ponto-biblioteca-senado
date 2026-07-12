@@ -264,35 +264,79 @@ window.onload = () => {
         }
 
         async function autenticar() {
-            const email = document.getElementById('login-email').value;
-            const senha = document.getElementById('login-senha').value;
-            if(!email || !senha) return alert("Preencha todos os campos!");
+    const email = document.getElementById('login-email').value;
+    const senha = document.getElementById('login-senha').value;
+    
+    if (!email || !senha) return alert("Preencha todos os campos!");
 
-            const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
-            if (authError) return alert("Erro no login: " + authError.message);
+    try {
+        // 1. Tenta autenticar
+        const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ 
+            email: email, 
+            password: senha 
+        });
 
-            sessionUser = authData.user;
-            const { data: perfilData } = await supabaseClient.from('perfis').select('*').eq('id', sessionUser.id).single();
+        if (authError) {
+            console.error("Erro no Auth:", authError);
+            return alert("Erro no login: " + authError.message);
+        }
 
-            if (!perfilData) return alert("Perfil funcional não configurado.");
-            sessionPerfis = perfilData;
+        // 2. Se chegou aqui, o login foi aceito pelo Supabase
+        sessionUser = authData.user;
+        console.log("Usuário logado:", sessionUser.id);
 
-            if (perfilData.role === 'admin') {
-                gerenciarTelas('admin');
-            } else {
-                document.getElementById('user-nome').textContent = perfilData.nome;
-                document.getElementById('user-matricula').textContent = perfilData.matricula;
-                document.getElementById('user-avatar-char').textContent = perfilData.nome.charAt(0).toUpperCase();
-                gerenciarTelas('estagiario');
+        // 3. Busca o perfil (adicionado log para saber se o erro está aqui)
+        const { data: perfilData, error: perfilError } = await supabaseClient
+            .from('perfis')
+            .select('*')
+            .eq('id', sessionUser.id)
+            .single();
+
+        if (perfilError) {
+            console.error("Erro ao buscar perfil:", perfilError);
+            return alert("Erro ao carregar perfil: " + perfilError.message);
+        }
+
+        sessionPerfis = perfilData;
+
+        // 4. Configura a tela
+        if (perfilData.role === 'admin') {
+            gerenciarTelas('admin');
+        } else {
+            // Atualiza campos de texto
+            document.getElementById('user-nome').textContent = perfilData.nome;
+            document.getElementById('user-matricula').textContent = perfilData.matricula;
+            document.getElementById('user-avatar-char').textContent = perfilData.nome.charAt(0).toUpperCase();
+            
+            gerenciarTelas('estagiario');
+            
+            // IMPORTANTE: Recarrega os status assim que logar
+            if (typeof checarStatusDoDia === 'function') {
+                checarStatusDoDia();
             }
         }
+    } catch (err) {
+        console.error("Erro inesperado:", err);
+        alert("Erro crítico: " + err.message);
+    }
+}
 
-        async function deslogar() {
-            await supabaseClient.auth.signOut();
-            sessionUser = null; sessionPerfis = null;
-            if (streamAtivo) streamAtivo.getTracks().forEach(track => track.stop());
-            gerenciarTelas('login');
-        }
+async function deslogar() {
+    // Para o stream da câmera antes de limpar a sessão
+    if (streamAtivo) {
+        streamAtivo.getTracks().forEach(track => track.stop());
+        streamAtivo = null;
+    }
+    
+    await supabaseClient.auth.signOut();
+    
+    // Limpa variáveis locais
+    sessionUser = null; 
+    sessionPerfis = null;
+    
+    // Força o redirecionamento para a tela de login
+    gerenciarTelas('login');
+}
 
         function inicializarCameraEGPS() {
             const video = document.getElementById('webcam');
