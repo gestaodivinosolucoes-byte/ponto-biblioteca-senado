@@ -469,19 +469,39 @@
         }
 
         // ATALHO COMPATÍVEL COM CORREÇÃO DE HORÁRIO DO BANCO
-        async function responderSolicitacao(id, status, matricula, data, hora, tipo) {
+       async function responderSolicitacao(id, status, matricula, data, hora, tipo) {
             if (status === 'aprovado') {
-                // Força a montagem no fuso local transformando em ISO estrito
                 const dataMontada = new Date(`${data}T${hora}:00`);
-                await supabaseClient.from('registros_ponto').insert([{
-                    matricula: matricula,
-                    tipo_batida: `${tipo} (Ajuste Manual)`,
-                    created_at: dataMontada.toISOString(),
-                    foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
-                }]);
+                
+                // 1. Tenta inserir o registro
+                const { data: insertData, error: insertError } = await supabaseClient
+                    .from('registros_ponto')
+                    .insert([{
+                        matricula: matricula,
+                        tipo_batida: `${tipo} (Ajuste Manual)`,
+                        created_at: dataMontada.toISOString(),
+                        foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
+                    }]);
+
+                if (insertError) {
+                    console.error("Erro ao inserir:", insertError);
+                    return alert("Erro ao salvar ajuste: " + insertError.message);
+                }
             }
-            await supabaseClient.from('solicitacoes_ponto').update({ status: status }).eq('id', id);
-            alert(`Solicitação processada!`); carregarDadosPainelAdmin();
+            
+            // 2. Atualiza o status da solicitação
+            const { error: updateError } = await supabaseClient
+                .from('solicitacoes_ponto')
+                .update({ status: status })
+                .eq('id', id);
+
+            if (updateError) {
+                console.error("Erro ao atualizar status:", updateError);
+                return alert("Erro ao atualizar status: " + updateError.message);
+            }
+
+            alert(`Solicitação processada com sucesso!`);
+            carregarDadosPainelAdmin();
         }
 
         async function baixarFolhaPonto() {
