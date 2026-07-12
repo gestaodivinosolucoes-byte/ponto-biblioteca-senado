@@ -205,21 +205,39 @@
 const SUPABASE_URL = 'https://bkkbyaspzmzgonwxvlcc.supabase.co';
 const SUPABASE_ANON_KEY = 'SUA_NOVA_CHAVE_AQUI';
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true // Essencial para manter o login após F5
-    }
-});
+// 1. Inicialização (Logo no topo do seu arquivo JS)
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        setInterval(() => {
-            const agora = new Date();
-            const relogio = document.getElementById('live-clock');
-            const data = document.getElementById('current-date');
-            if(relogio) relogio.textContent = agora.toLocaleTimeString('pt-BR');
-            if(data) data.textContent = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        }, 1000);
+// 2. ADICIONE O REALTIME AQUI, logo abaixo:
+supabaseClient
+  .channel('canal-ponto') // Pode dar o nome que quiser
+  .on(
+    'postgres_changes',
+    { event: 'INSERT', schema: 'public', table: 'registros_ponto' },
+    (payload) => {
+      console.log('Nova batida detectada!', payload);
+      // Aqui chamamos a função que atualiza a tela para o estagiário
+      checarStatusDoDia(); 
+    }
+  )
+  .subscribe();
+
+// 3. O resto do seu código (funções, eventos, etc.) vem depois...
+
+        function iniciarRelogio() {
+    setInterval(() => {
+        const agora = new Date();
+        const horaFormatada = agora.toLocaleTimeString('pt-BR');
+        const elemento = document.getElementById('relogio'); // Verifique se este ID existe no seu HTML
+        if (elemento) elemento.innerText = horaFormatada;
+    }, 1000); // 1000ms = 1 segundo
+}
+
+// Chame essa função assim que a página carregar
+window.onload = () => {
+    iniciarRelogio();
+    verificarSessao(); // Sua função que checa se o usuário já está logado
+};
 
         function gerenciarTelas(telaAtiva) {
             document.getElementById('view-login').classList.add('hidden');
