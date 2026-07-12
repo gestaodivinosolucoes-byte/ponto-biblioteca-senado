@@ -3,34 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Ponto Integrado - Biblioteca</title>
+    <title>Sistema de Ponto Integrado — Biblioteca do Senado</title>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fontes: Fraunces (display institucional) + Inter (texto) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root{
+            --navy:        #10203A;
+            --navy-soft:   #1B3358;
+            --paper:       #F6F5F1;
+            --brass:       #A9822F;
+            --brass-soft:  #E8DCB8;
+            --ink:         #1B2430;
+            --ink-muted:   #5B6472;
+            --ok:          #1F7A54;
+            --warn:        #B8862F;
+            --danger:      #B23A32;
+        }
+        *{ font-family: 'Inter', system-ui, sans-serif; }
+        .font-display{ font-family: 'Fraunces', serif; }
+        body{ background: var(--paper); }
+        .tabular-nums{ font-variant-numeric: tabular-nums; }
+
+        /* Selo/carimbo institucional usado como assinatura visual */
+        .seal{
+            width: 44px; height: 44px; border-radius: 9999px;
+            background: radial-gradient(circle at 35% 30%, var(--brass-soft), var(--brass) 70%);
+            display:flex; align-items:center; justify-content:center;
+            box-shadow: 0 0 0 3px rgba(169,130,47,.18), inset 0 1px 2px rgba(255,255,255,.5);
+            color: var(--navy); font-family:'Fraunces',serif; font-weight:700; font-size:15px;
+        }
+        .btn-primary{
+            background: var(--navy); color:#fff; transition: all .18s ease;
+        }
+        .btn-primary:hover:not(:disabled){ background: var(--navy-soft); }
+        .btn-primary:disabled{ opacity:.45; cursor:not-allowed; }
+
+        .btn-brass{ background: var(--brass); color:#fff; }
+        .btn-brass:hover:not(:disabled){ filter:brightness(1.06); }
+
+        .point-btn:disabled{ opacity:.4; cursor:not-allowed; filter:grayscale(.3); }
+
+        .fade-in{ animation: fadeIn .25s ease both; }
+        @keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+        .spinner{
+            width:16px; height:16px; border-radius:9999px;
+            border: 2px solid rgba(255,255,255,.35); border-top-color:#fff;
+            animation: spin .7s linear infinite; display:inline-block;
+        }
+        @keyframes spin{ to{ transform: rotate(360deg); } }
+
+        input:focus{ outline:none; box-shadow: 0 0 0 3px rgba(16,32,58,.12); border-color: var(--navy) !important; }
+
+        @media (prefers-reduced-motion: reduce){
+            .fade-in, .spinner{ animation: none !important; }
+        }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans flex flex-col justify-between">
+<body class="min-h-screen flex flex-col justify-between" style="color:var(--ink)">
 
     <!-- Cabeçalho Global -->
-    <header class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50 shadow-sm">
+    <header class="bg-white border-b py-4 px-6 sticky top-0 z-50 shadow-sm" style="border-color:#E7E4DA">
         <div class="max-w-5xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md shadow-indigo-100">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                </div>
+                <div class="seal">BS</div>
                 <div>
-                    <h1 class="text-base font-bold text-slate-800 tracking-tight">Biblioteca do Senado</h1>
-                    <p class="text-xs text-slate-500 font-medium">Controle de Ponto Integrado</p>
+                    <h1 class="text-base font-bold font-display tracking-tight" style="color:var(--navy)">Biblioteca do Senado</h1>
+                    <p class="text-xs font-medium" style="color:var(--ink-muted)">Controle de Ponto Integrado</p>
                 </div>
             </div>
             <div class="flex items-center space-x-4">
                 <div class="text-right hidden sm:block">
-                    <div id="live-clock" class="text-lg font-black text-indigo-600 tabular-nums">00:00:00</div>
-                    <div id="current-date" class="text-xs text-slate-500 font-bold">--/--/----</div>
+                    <div id="live-clock" class="text-lg font-black tabular-nums font-display" style="color:var(--navy)">00:00:00</div>
+                    <div id="current-date" class="text-xs font-bold" style="color:var(--ink-muted)">--/--/----</div>
                 </div>
-                <button id="btn-logout" onclick="deslogar()" class="hidden px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition">
+                <button id="btn-logout" onclick="deslogar()" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold transition" style="background:#FBEAE8; color:var(--danger)">
                     <i class="fa-solid fa-right-from-bracket"></i> Sair
                 </button>
             </div>
@@ -39,22 +96,31 @@
 
     <!-- 1. TELA DE LOGIN -->
     <section id="view-login" class="flex-1 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl w-full max-w-sm">
+        <div class="bg-white p-8 rounded-2xl border shadow-xl w-full max-w-sm" style="border-color:#E7E4DA">
             <div class="text-center mb-6">
-                <h2 class="text-xl font-black text-slate-800 tracking-tight">Acessar o Sistema</h2>
-                <p class="text-xs text-slate-400 mt-1">Utilize suas credenciais institucionais</p>
+                <div class="seal mx-auto mb-3">BS</div>
+                <h2 class="text-xl font-black font-display tracking-tight" style="color:var(--navy)">Acessar o Sistema</h2>
+                <p class="text-xs mt-1" style="color:var(--ink-muted)">Utilize suas credenciais institucionais</p>
             </div>
+
+            <div id="login-erro" class="hidden mb-4 text-xs font-semibold px-3 py-2 rounded-lg fade-in" style="background:#FBEAE8; color:var(--danger)"></div>
+
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">E-mail</label>
-                    <input type="email" id="login-email" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500" placeholder="nome@senado.leg.br">
+                    <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">E-mail</label>
+                    <input type="email" id="login-email" autocomplete="username" class="w-full px-3 py-2 border rounded-xl text-sm" style="border-color:#DCD8CC" placeholder="nome@senado.leg.br">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-600 mb-1">Senha</label>
-                    <input type="password" id="login-senha" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500" placeholder="••••••••">
+                    <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Senha</label>
+                    <div class="relative">
+                        <input type="password" id="login-senha" autocomplete="current-password" class="w-full px-3 py-2 pr-10 border rounded-xl text-sm" style="border-color:#DCD8CC" placeholder="••••••••">
+                        <button type="button" onclick="alternarVisibilidadeSenha()" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ink-muted)">
+                            <i id="icone-olho" class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
-                <button onclick="autenticar()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl transition shadow-lg shadow-indigo-100 active:scale-[0.98]">
-                    Entrar no Painel
+                <button id="btn-entrar" onclick="autenticar()" class="w-full py-2.5 btn-primary font-bold text-sm rounded-xl transition shadow-lg active:scale-[0.98] flex items-center justify-center gap-2">
+                    <span id="btn-entrar-texto">Entrar no Painel</span>
                 </button>
             </div>
         </div>
@@ -62,72 +128,71 @@
 
     <!-- 2. PAINEL DO ESTAGIÁRIO -->
     <section id="view-estagiario" class="hidden flex-1 max-w-md mx-auto w-full px-4 py-6 flex flex-col space-y-5">
-        <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
+        <div class="rounded-2xl p-5 text-white shadow-xl relative overflow-hidden" style="background:linear-gradient(120deg, var(--navy), var(--navy-soft))">
             <div class="flex items-center space-x-4">
-                <div id="user-avatar-char" class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold backdrop-blur-sm">--</div>
+                <div id="user-avatar-char" class="w-12 h-12 bg-white/15 rounded-full flex items-center justify-center text-xl font-bold font-display backdrop-blur-sm">--</div>
                 <div>
-                    <div class="text-xs text-indigo-100 font-medium uppercase tracking-wider">Painel do Estagiário</div>
-                    <h2 id="user-nome" class="text-lg font-bold leading-tight tracking-tight">--</h2>
-                    <div class="text-xs text-indigo-200 mt-0.5">Matrícula: <span id="user-matricula" class="font-mono bg-white/20 px-1.5 py-0.5 rounded text-white font-bold">--</span></div>
+                    <div class="text-xs font-medium uppercase tracking-wider" style="color:var(--brass-soft)">Painel do Estagiário</div>
+                    <h2 id="user-nome" class="text-lg font-bold font-display leading-tight tracking-tight">--</h2>
+                    <div class="text-xs mt-0.5" style="color:#C9D3E2">Matrícula: <span id="user-matricula" class="font-mono bg-white/15 px-1.5 py-0.5 rounded font-bold text-white">--</span></div>
                 </div>
             </div>
         </div>
 
         <!-- Câmera e GPS -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col items-center">
+        <div class="bg-white rounded-2xl border p-4 shadow-sm flex flex-col items-center" style="border-color:#E7E4DA">
             <div class="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
-                <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
-                <canvas id="photo-capture" class="w-full h-full object-cover hidden"></canvas>
+                <video id="webcam" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                <canvas id="photo-capture" class="hidden"></canvas>
             </div>
-            <button id="btn-retake" class="mt-3 px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg hidden">Tirar Nova Foto</button>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+        <div class="bg-white rounded-2xl border p-4 shadow-sm flex items-center justify-between" style="border-color:#E7E4DA">
             <div class="flex items-center space-x-3">
-                <div id="geo-icon" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500"><i class="fa-solid fa-location-dot"></i></div>
+                <div id="geo-icon" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center" style="color:var(--ink-muted)"><i class="fa-solid fa-location-dot"></i></div>
                 <div>
-                    <div class="text-xs font-bold text-slate-700">Geolocalização</div>
-                    <div id="geo-text" class="text-xs text-slate-400 font-medium">Obtendo GPS...</div>
+                    <div class="text-xs font-bold" style="color:var(--ink)">Geolocalização</div>
+                    <div id="geo-text" class="text-xs font-medium" style="color:var(--ink-muted)">Obtendo GPS...</div>
                 </div>
             </div>
-            <span id="badge-geo" class="text-xs bg-slate-100 text-slate-500 px-2.5 py-0.5 rounded-full font-bold">Aguardando</span>
+            <span id="badge-geo" class="text-xs bg-slate-100 px-2.5 py-0.5 rounded-full font-bold" style="color:var(--ink-muted)">Aguardando</span>
         </div>
 
         <!-- Histórico Individual -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-            <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
-                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Batidas de Hoje</span>
-                <span id="total-horas-dia" class="text-xs bg-indigo-600 text-white px-2.5 py-0.5 rounded-full font-black">Total: 0h00m / 6h</span>
+        <div class="bg-white rounded-2xl border p-4 shadow-sm" style="border-color:#E7E4DA">
+            <div class="flex items-center justify-between mb-3 pb-2 border-b" style="border-color:#F0EEE6">
+                <span class="text-xs font-bold uppercase tracking-wider" style="color:var(--ink)">Batidas de Hoje</span>
+                <span id="total-horas-dia" class="text-xs text-white px-2.5 py-0.5 rounded-full font-black" style="background:var(--navy)">Total: 0h00m / 6h</span>
             </div>
             <div id="historico-container" class="space-y-2"></div>
         </div>
 
         <!-- Painel de Botões de Ação -->
         <div class="space-y-3">
-            <button id="btn-entrada" onclick="registrarPonto('Entrada')" class="w-full bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]">
-                <div class="flex items-center space-x-3"><div class="text-emerald-600 font-bold text-lg"><i class="fa-solid fa-right-to-bracket"></i></div><div class="text-left"><p class="text-sm font-bold text-slate-800">Entrada</p></div></div>
-                <div id="status-entrada" class="text-xs text-slate-400 italic">Não registrado</div>
+            <button id="btn-entrada" disabled class="point-btn w-full bg-white border p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]" style="border-color:#E7E4DA" onclick="registrarPonto('Entrada')">
+                <div class="flex items-center space-x-3"><div class="font-bold text-lg" style="color:var(--ok)"><i class="fa-solid fa-right-to-bracket"></i></div><div class="text-left"><p class="text-sm font-bold" style="color:var(--ink)">Entrada</p></div></div>
+                <div id="status-entrada" class="text-xs italic" style="color:var(--ink-muted)">Não registrado</div>
             </button>
-            <button id="btn-saida-pausa" onclick="registrarPonto('Saída Pausa')" class="w-full bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]">
-                <div class="flex items-center space-x-3"><div class="text-amber-600 font-bold text-lg"><i class="fa-solid fa-utensils"></i></div><div class="text-left"><p class="text-sm font-bold text-slate-800">Saída Intervalo</p></div></div>
-                <div id="status-saida-pausa" class="text-xs text-slate-400 italic">Não registrado</div>
+            <button id="btn-saida-pausa" disabled class="point-btn w-full bg-white border p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]" style="border-color:#E7E4DA" onclick="registrarPonto('Saída Pausa')">
+                <div class="flex items-center space-x-3"><div class="font-bold text-lg" style="color:var(--warn)"><i class="fa-solid fa-utensils"></i></div><div class="text-left"><p class="text-sm font-bold" style="color:var(--ink)">Saída Intervalo</p></div></div>
+                <div id="status-saida-pausa" class="text-xs italic" style="color:var(--ink-muted)">Não registrado</div>
             </button>
-            <button id="btn-retorno-pausa" onclick="registrarPonto('Retorno Pausa')" class="w-full bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]">
-                <div class="flex items-center space-x-3"><div class="text-cyan-600 font-bold text-lg"><i class="fa-solid fa-briefcase"></i></div><div class="text-left"><p class="text-sm font-bold text-slate-800">Retorno Intervalo</p></div></div>
-                <div id="status-retorno-pausa" class="text-xs text-slate-400 italic">Não registrado</div>
+            <button id="btn-retorno-pausa" disabled class="point-btn w-full bg-white border p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]" style="border-color:#E7E4DA" onclick="registrarPonto('Retorno Pausa')">
+                <div class="flex items-center space-x-3"><div class="font-bold text-lg" style="color:#0E7C8C"><i class="fa-solid fa-briefcase"></i></div><div class="text-left"><p class="text-sm font-bold" style="color:var(--ink)">Retorno Intervalo</p></div></div>
+                <div id="status-retorno-pausa" class="text-xs italic" style="color:var(--ink-muted)">Não registrado</div>
             </button>
-            <button id="btn-saida" onclick="registrarPonto('Saída')" class="w-full bg-white border border-slate-200 p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]">
-                <div class="flex items-center space-x-3"><div class="text-rose-600 font-bold text-lg"><i class="fa-solid fa-right-from-bracket"></i></div><div class="text-left"><p class="text-sm font-bold text-slate-800">Saída Final</p></div></div>
-                <div id="status-saida" class="text-xs text-slate-400 italic">Não registrado</div>
+            <button id="btn-saida" disabled class="point-btn w-full bg-white border p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]" style="border-color:#E7E4DA" onclick="registrarPonto('Saída')">
+                <div class="flex items-center space-x-3"><div class="font-bold text-lg" style="color:var(--danger)"><i class="fa-solid fa-right-from-bracket"></i></div><div class="text-left"><p class="text-sm font-bold" style="color:var(--ink)">Saída Final</p></div></div>
+                <div id="status-saida" class="text-xs italic" style="color:var(--ink-muted)">Não registrado</div>
             </button>
         </div>
 
         <!-- Solicitação de Ajuste Manual -->
-        <div class="bg-slate-100 rounded-2xl p-4 border border-slate-200 space-y-3">
-            <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider"><i class="fa-solid fa-pen-to-square mr-1"></i> Solicitar Ajuste de Ponto</h3>
+        <div class="rounded-2xl p-4 border space-y-3" style="background:#EFEDE4; border-color:#E7E4DA">
+            <h3 class="text-xs font-bold uppercase tracking-wider" style="color:var(--ink)"><i class="fa-solid fa-pen-to-square mr-1"></i> Solicitar Ajuste de Ponto</h3>
             <div class="grid grid-cols-2 gap-2">
-                <input type="date" id="adj-data" class="w-full p-2 bg-white rounded-lg text-xs border border-slate-200">
-                <select id="adj-tipo" class="w-full p-2 bg-white rounded-lg text-xs border border-slate-200">
+                <input type="date" id="adj-data" class="w-full p-2 bg-white rounded-lg text-xs border" style="border-color:#DCD8CC">
+                <select id="adj-tipo" class="w-full p-2 bg-white rounded-lg text-xs border" style="border-color:#DCD8CC">
                     <option value="Entrada">Entrada</option>
                     <option value="Saída Pausa">Saída Intervalo</option>
                     <option value="Retorno Pausa">Retorno Intervalo</option>
@@ -135,43 +200,43 @@
                 </select>
             </div>
             <div class="grid grid-cols-3 gap-2 items-center">
-                <input type="time" id="adj-hora" class="col-span-1 p-2 bg-white rounded-lg text-xs border border-slate-200">
-                <input type="text" id="adj-motivo" placeholder="Motivo/Justificativa" class="col-span-2 p-2 bg-white rounded-lg text-xs border border-slate-200">
+                <input type="time" id="adj-hora" class="col-span-1 p-2 bg-white rounded-lg text-xs border" style="border-color:#DCD8CC">
+                <input type="text" id="adj-motivo" placeholder="Motivo/Justificativa" class="col-span-2 p-2 bg-white rounded-lg text-xs border" style="border-color:#DCD8CC">
             </div>
-            <button onclick="enviarSolicitacaoAjuste()" class="w-full py-1.5 bg-slate-700 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition">Enviar Pedido ao Admin</button>
+            <button id="btn-enviar-ajuste" onclick="enviarSolicitacaoAjuste()" class="w-full py-1.5 text-white rounded-lg text-xs font-bold transition" style="background:var(--navy)">Enviar Pedido ao Admin</button>
         </div>
     </section>
 
     <!-- 3. PAINEL DO ADMINISTRADOR -->
     <section id="view-admin" class="hidden flex-1 max-w-5xl mx-auto w-full px-4 py-6 space-y-6">
-        <div class="bg-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4" style="background:var(--navy)">
             <div>
-                <span class="text-xs bg-indigo-500/30 text-indigo-300 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Gestão Central</span>
-                <h2 class="text-2xl font-black mt-1">Painel do Administrator</h2>
-                <p class="text-xs text-slate-400">Monitore batidas, valide correções eletrônicas e emita relatórios regulamentares</p>
+                <span class="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider" style="background:rgba(169,130,47,.25); color:var(--brass-soft)">Gestão Central</span>
+                <h2 class="text-2xl font-black font-display mt-1">Painel do Administrador</h2>
+                <p class="text-xs" style="color:#C9D3E2">Monitore batidas, valide correções eletrônicas e emita relatórios regulamentares</p>
             </div>
-            <button onclick="baixarFolhaPonto()" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition shadow-lg shadow-indigo-900/30">
+            <button onclick="baixarFolhaPonto()" class="btn-brass px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition shadow-lg">
                 <i class="fa-solid fa-file-arrow-down"></i> Exportar Folha de Ponto (.CSV)
             </button>
         </div>
 
-        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-white p-4 rounded-xl border shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4" style="border-color:#E7E4DA">
             <div>
-                <label class="block text-xs font-bold text-slate-600 mb-1">Filtrar por Matrícula do Estagiário</label>
-                <input type="text" id="filtro-matricula" oninput="carregarDadosPainelAdmin()" placeholder="Ex: E-2026 (Deixe vazio para ver todos)" class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs">
+                <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Filtrar por Matrícula do Estagiário</label>
+                <input type="text" id="filtro-matricula" oninput="carregarDadosPainelAdmin()" placeholder="Ex: E-2026 (Deixe vazio para ver todos)" class="w-full px-3 py-1.5 border rounded-xl text-xs" style="border-color:#DCD8CC">
             </div>
             <div>
-                <label class="block text-xs font-bold text-slate-600 mb-1">Data Específica</label>
-                <input type="date" id="filtro-data" onchange="carregarDadosPainelAdmin()" class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs">
+                <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Data Específica</label>
+                <input type="date" id="filtro-data" onchange="carregarDadosPainelAdmin()" class="w-full px-3 py-1.5 border rounded-xl text-xs" style="border-color:#DCD8CC">
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="p-4 border-b border-slate-100 bg-slate-50 font-bold text-xs text-slate-700 uppercase tracking-wider">Histórico Geral de Registros</div>
+            <div class="lg:col-span-2 bg-white rounded-2xl border shadow-sm overflow-hidden" style="border-color:#E7E4DA">
+                <div class="p-4 border-b font-bold text-xs uppercase tracking-wider" style="background:#F6F5F1; border-color:#E7E4DA; color:var(--ink)">Histórico Geral de Registros</div>
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-100">
+                        <thead class="font-bold uppercase border-b" style="background:#F6F5F1; color:var(--ink-muted); border-color:#E7E4DA">
                             <tr>
                                 <th class="p-3">Colaborador</th>
                                 <th class="p-3">Batida / Horário</th>
@@ -179,65 +244,102 @@
                                 <th class="p-3 text-center">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="admin-tabela-ponto" class="divide-y divide-slate-100"></tbody>
+                        <tbody id="admin-tabela-ponto" class="divide-y" style="border-color:#F0EEE6"></tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-4">
-                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider pb-2 border-b border-slate-100"><i class="fa-solid fa-bell-concierge text-indigo-500 mr-1.5"></i> Solicitações Pendentes</h3>
+            <div class="bg-white rounded-2xl border shadow-sm p-4 space-y-4" style="border-color:#E7E4DA">
+                <h3 class="text-xs font-bold uppercase tracking-wider pb-2 border-b" style="color:var(--ink); border-color:#F0EEE6"><i class="fa-solid fa-bell-concierge mr-1.5" style="color:var(--brass)"></i> Solicitações Pendentes</h3>
                 <div id="admin-solicitacoes-container" class="space-y-3 max-h-[500px] overflow-y-auto pr-1"></div>
             </div>
         </div>
     </section>
 
-    <footer class="text-center py-4 text-[10px] text-slate-400 font-bold bg-slate-100 border-t border-slate-200 mt-6">
+    <footer class="text-center py-4 text-[10px] font-bold border-t mt-6" style="color:var(--ink-muted); background:#EFEDE4; border-color:#E7E4DA">
         Sistema Criptografado &bull; Biblioteca do Senado Federal
     </footer>
 
     <script>
+        // ==========================================================================
+        // CONFIGURAÇÃO DO SUPABASE
+        // Substitua pela sua URL e chave ANON reais (Project Settings > API).
+        // Nunca coloque a service_role key aqui — apenas a anon/public key,
+        // protegida pelas políticas de RLS nas tabelas 'perfis', 'registros_ponto'
+        // e 'solicitacoes_ponto'.
+        // ==========================================================================
+        const SUPABASE_URL = 'https://bkkbyaspzmzgonwxvlcc.supabase.co';
+        const SUPABASE_ANON_KEY = 'SUA_NOVA_CHAVE_AQUI';
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         let sessionUser = null;
         let sessionPerfis = null;
         let streamAtivo = null;
         let coordsGps = { lat: null, lng: null };
+        let cameraOk = false;
+        let gpsOk = false;
 
-        // Substitua pela sua nova chave após regenerar
-const SUPABASE_URL = 'https://bkkbyaspzmzgonwxvlcc.supabase.co';
-const SUPABASE_ANON_KEY = 'SUA_NOVA_CHAVE_AQUI';
+        // Realtime: qualquer nova batida inserida atualiza a tela do estagiário logado
+        supabaseClient
+            .channel('canal-ponto')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registros_ponto' }, () => {
+                if (sessionPerfis && !sessionPerfis.role) checarStatusDoDia();
+                else if (sessionPerfis && sessionPerfis.role !== 'admin') checarStatusDoDia();
+            })
+            .subscribe();
 
-// 1. Inicialização (Logo no topo do seu arquivo JS)
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // --------------------------------------------------------------------
+        // INICIALIZAÇÃO (ponto único de entrada — evita handlers duplicados)
+        // --------------------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            iniciarRelogio();
+            verificarSessao();
 
-// 2. ADICIONE O REALTIME AQUI, logo abaixo:
-supabaseClient
-  .channel('canal-ponto') // Pode dar o nome que quiser
-  .on(
-    'postgres_changes',
-    { event: 'INSERT', schema: 'public', table: 'registros_ponto' },
-    (payload) => {
-      console.log('Nova batida detectada!', payload);
-      // Aqui chamamos a função que atualiza a tela para o estagiário
-      checarStatusDoDia(); 
-    }
-  )
-  .subscribe();
-
-// 3. O resto do seu código (funções, eventos, etc.) vem depois...
+            // Enter para logar
+            document.getElementById('login-senha').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') autenticar();
+            });
+            document.getElementById('login-email').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') autenticar();
+            });
+        });
 
         function iniciarRelogio() {
-    setInterval(() => {
-        const agora = new Date();
-        const horaFormatada = agora.toLocaleTimeString('pt-BR');
-        const elemento = document.getElementById('relogio'); // Verifique se este ID existe no seu HTML
-        if (elemento) elemento.innerText = horaFormatada;
-    }, 1000); // 1000ms = 1 segundo
-}
+            setInterval(() => {
+                const agora = new Date();
+                const elRelogio = document.getElementById('live-clock');
+                const elData = document.getElementById('current-date');
+                if (elRelogio) elRelogio.innerText = agora.toLocaleTimeString('pt-BR');
+                if (elData) elData.innerText = agora.toLocaleDateString('pt-BR');
+            }, 1000);
+        }
 
-// Chame essa função assim que a página carregar
-window.onload = () => {
-    iniciarRelogio();
-    verificarSessao(); // Sua função que checa se o usuário já está logado
-};
+        // Restaura sessão ativa (ex.: usuário atualizou a página)
+        async function verificarSessao() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { gerenciarTelas('login'); return; }
+
+            sessionUser = session.user;
+            const { data: perfilData, error: perfilError } = await supabaseClient
+                .from('perfis').select('*').eq('id', sessionUser.id).single();
+
+            if (perfilError || !perfilData) { gerenciarTelas('login'); return; }
+
+            sessionPerfis = perfilData;
+            aplicarPerfilNaTela(perfilData);
+        }
+
+        function aplicarPerfilNaTela(perfilData) {
+            if (perfilData.role === 'admin') {
+                gerenciarTelas('admin');
+                return;
+            }
+            document.getElementById('user-nome').textContent = perfilData.nome;
+            document.getElementById('user-matricula').textContent = perfilData.matricula;
+            document.getElementById('user-avatar-char').textContent = (perfilData.nome || '?').charAt(0).toUpperCase();
+            gerenciarTelas('estagiario');
+        }
 
         function gerenciarTelas(telaAtiva) {
             document.getElementById('view-login').classList.add('hidden');
@@ -263,277 +365,437 @@ window.onload = () => {
             }
         }
 
-        // Garanta que esta função esteja na raiz do arquivo, sem estar dentro de { } de outra coisa
-async function autenticar() {
-    console.log("Teste: autenticar chamado!");
-    
-    const campoEmail = document.getElementById('login-email');
-    const campoSenha = document.getElementById('login-senha');
-
-    if (!campoEmail || !campoSenha) {
-        console.error("Campos de login não encontrados no HTML!");
-        return;
-    }
-
-    const email = campoEmail.value;
-    const senha = campoSenha.value;
-
-    if (!email || !senha) {
-        alert("Preencha todos os campos!");
-        return;
-    }
-
-    // ... restante da lógica de login ...
-}
-
-        // 2. Se chegou aqui, o login foi aceito pelo Supabase
-        sessionUser = authData.user;
-        console.log("Usuário logado:", sessionUser.id);
-
-        // 3. Busca o perfil (adicionado log para saber se o erro está aqui)
-        const { data: perfilData, error: perfilError } = await supabaseClient
-            .from('perfis')
-            .select('*')
-            .eq('id', sessionUser.id)
-            .single();
-
-        if (perfilError) {
-            console.error("Erro ao buscar perfil:", perfilError);
-            return alert("Erro ao carregar perfil: " + perfilError.message);
+        // --------------------------------------------------------------------
+        // LOGIN / LOGOUT
+        // --------------------------------------------------------------------
+        function alternarVisibilidadeSenha() {
+            const campo = document.getElementById('login-senha');
+            const icone = document.getElementById('icone-olho');
+            const visivel = campo.type === 'text';
+            campo.type = visivel ? 'password' : 'text';
+            icone.classList.toggle('fa-eye', visivel);
+            icone.classList.toggle('fa-eye-slash', !visivel);
         }
 
-        sessionPerfis = perfilData;
+        function mostrarErroLogin(msg) {
+            const el = document.getElementById('login-erro');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
 
-        // 4. Configura a tela
-        if (perfilData.role === 'admin') {
-            gerenciarTelas('admin');
-        } else {
-            // Atualiza campos de texto
-            document.getElementById('user-nome').textContent = perfilData.nome;
-            document.getElementById('user-matricula').textContent = perfilData.matricula;
-            document.getElementById('user-avatar-char').textContent = perfilData.nome.charAt(0).toUpperCase();
-            
-            gerenciarTelas('estagiario');
-            
-            // IMPORTANTE: Recarrega os status assim que logar
-            if (typeof checarStatusDoDia === 'function') {
-                checarStatusDoDia();
+        function limparErroLogin() {
+            document.getElementById('login-erro').classList.add('hidden');
+        }
+
+        function setLoadingLogin(carregando) {
+            const btn = document.getElementById('btn-entrar');
+            const texto = document.getElementById('btn-entrar-texto');
+            btn.disabled = carregando;
+            texto.innerHTML = carregando ? '<span class="spinner"></span> Entrando...' : 'Entrar no Painel';
+        }
+
+        function traduzErroAuth(mensagem) {
+            if (!mensagem) return 'Não foi possível entrar. Tente novamente.';
+            const m = mensagem.toLowerCase();
+            if (m.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
+            if (m.includes('email not confirmed')) return 'E-mail ainda não confirmado. Verifique sua caixa de entrada.';
+            return 'Não foi possível entrar: ' + mensagem;
+        }
+
+        async function autenticar() {
+            limparErroLogin();
+
+            const email = document.getElementById('login-email').value.trim();
+            const senha = document.getElementById('login-senha').value;
+
+            if (!email || !senha) {
+                mostrarErroLogin('Preencha e-mail e senha.');
+                return;
+            }
+
+            setLoadingLogin(true);
+            try {
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                    email, password: senha
+                });
+
+                if (authError) {
+                    mostrarErroLogin(traduzErroAuth(authError.message));
+                    return;
+                }
+
+                sessionUser = authData.user;
+
+                const { data: perfilData, error: perfilError } = await supabaseClient
+                    .from('perfis')
+                    .select('*')
+                    .eq('id', sessionUser.id)
+                    .single();
+
+                if (perfilError || !perfilData) {
+                    mostrarErroLogin('Login OK, mas não foi possível carregar o perfil do usuário.');
+                    return;
+                }
+
+                sessionPerfis = perfilData;
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-senha').value = '';
+                aplicarPerfilNaTela(perfilData);
+            } catch (err) {
+                mostrarErroLogin('Erro inesperado: ' + err.message);
+            } finally {
+                setLoadingLogin(false);
             }
         }
-    } catch (err) {
-        console.error("Erro inesperado:", err);
-        alert("Erro crítico: " + err.message);
-    }
-}
 
-async function deslogar() {
-    // Para o stream da câmera antes de limpar a sessão
-    if (streamAtivo) {
-        streamAtivo.getTracks().forEach(track => track.stop());
-        streamAtivo = null;
-    }
-    
-    await supabaseClient.auth.signOut();
-    
-    // Limpa variáveis locais
-    sessionUser = null; 
-    sessionPerfis = null;
-    
-    // Força o redirecionamento para a tela de login
-    gerenciarTelas('login');
-}
+        async function deslogar() {
+            if (streamAtivo) {
+                streamAtivo.getTracks().forEach(track => track.stop());
+                streamAtivo = null;
+            }
+            await supabaseClient.auth.signOut();
+            sessionUser = null;
+            sessionPerfis = null;
+            cameraOk = false;
+            gpsOk = false;
+            gerenciarTelas('login');
+        }
 
+        // --------------------------------------------------------------------
+        // CÂMERA E GEOLOCALIZAÇÃO
+        // --------------------------------------------------------------------
         function inicializarCameraEGPS() {
             const video = document.getElementById('webcam');
+
             if (navigator.mediaDevices && !streamAtivo) {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
-                    .then(stream => { streamAtivo = stream; video.srcObject = stream; })
-                    .catch(() => alert("Câmera indisponível. Permita o acesso."));
+                    .then(stream => {
+                        streamAtivo = stream;
+                        video.srcObject = stream;
+                        cameraOk = true;
+                        atualizarDisponibilidadeBotoes();
+                    })
+                    .catch(() => {
+                        cameraOk = false;
+                        alert("Câmera indisponível. Permita o acesso à câmera para registrar o ponto.");
+                    });
             }
+
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    coordsGps.lat = pos.coords.latitude; coordsGps.lng = pos.coords.longitude;
-                    document.getElementById('badge-geo').className = "text-xs bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold";
-                    document.getElementById('badge-geo').textContent = "OK";
-                    document.getElementById('geo-text').textContent = "Coordenadas capturadas via GPS";
-                });
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        coordsGps.lat = pos.coords.latitude;
+                        coordsGps.lng = pos.coords.longitude;
+                        gpsOk = true;
+                        document.getElementById('badge-geo').className = "text-xs px-2.5 py-0.5 rounded-full font-bold";
+                        document.getElementById('badge-geo').style.background = '#E3F3EC';
+                        document.getElementById('badge-geo').style.color = 'var(--ok)';
+                        document.getElementById('badge-geo').textContent = "OK";
+                        document.getElementById('geo-text').textContent = "Coordenadas capturadas via GPS";
+                        atualizarDisponibilidadeBotoes();
+                    },
+                    () => {
+                        gpsOk = false;
+                        document.getElementById('badge-geo').className = "text-xs px-2.5 py-0.5 rounded-full font-bold";
+                        document.getElementById('badge-geo').style.background = '#FBEAE8';
+                        document.getElementById('badge-geo').style.color = 'var(--danger)';
+                        document.getElementById('badge-geo').textContent = "Falhou";
+                        document.getElementById('geo-text').textContent = "Permita o acesso à localização para bater o ponto.";
+                    }
+                );
+            } else {
+                document.getElementById('geo-text').textContent = "Geolocalização não suportada neste navegador.";
             }
         }
 
-        const BIBLIOTECA_LAT = -15.8003; const BIBLIOTECA_LNG = -47.8790; const RAIO_MAXIMO_METROS = 100;
+        const BIBLIOTECA_LAT = -15.8003;
+        const BIBLIOTECA_LNG = -47.8790;
+        const RAIO_MAXIMO_METROS = 100;
+
         function calcularDistancia(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; const phi1 = lat1 * Math.PI / 180; const phi2 = lat2 * Math.PI / 180;
-            const dPhi = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dPhi/2) * Math.sin(dPhi/2) + Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+            const R = 6371e3;
+            const phi1 = lat1 * Math.PI / 180;
+            const phi2 = lat2 * Math.PI / 180;
+            const dPhi = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dPhi / 2) ** 2 + Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLon / 2) ** 2;
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
         }
 
         function gerenciarBotoesEstagiario(ativos, desativos) {
-            ativos.forEach(id => { const el = document.getElementById(id); if(el) { el.disabled = false; el.classList.remove('opacity-40', 'cursor-not-allowed'); }});
-            desativos.forEach(id => { const el = document.getElementById(id); if(el) { el.disabled = true; el.classList.add('opacity-40', 'cursor-not-allowed'); }});
+            ativos.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = false;
+            });
+            desativos.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = true;
+            });
         }
 
+        // Habilita os botões de ponto somente quando câmera e GPS estiverem prontos
+        // (o status "já registrado hoje" é reaplicado em checarStatusDoDia)
+        function atualizarDisponibilidadeBotoes() {
+            const ids = ['btn-entrada', 'btn-saida-pausa', 'btn-retorno-pausa', 'btn-saida'];
+            if (cameraOk && gpsOk) {
+                gerenciarBotoesEstagiario(ids, []);
+                checarStatusDoDia(); // reaplica bloqueios de batidas já feitas hoje
+            }
+        }
+
+        // --------------------------------------------------------------------
+        // REGISTRO DE PONTO
+        // --------------------------------------------------------------------
         async function checarStatusDoDia() {
-    if(!sessionPerfis) return;
-    
-    // Pegamos a data atual para garantir que buscamos as batidas do dia
-    const hoje = new Date().toISOString().split('T')[0];
-    
-    // Busca todas as batidas da matricula, independente do tipo, ordenadas
-    const { data } = await supabaseClient
-        .from('registros_ponto')
-        .select('*')
-        .eq('matricula', sessionPerfis.matricula)
-        .gte('created_at', `${hoje}T00:00:00`)
-        .order('created_at', { ascending: true });
+            if (!sessionPerfis) return;
 
-    const container = document.getElementById('historico-container');
-    container.innerHTML = "";
-    
-    // Resetar status visuais
-    const ids = ['status-entrada', 'status-saida-pausa', 'status-retorno-pausa', 'status-saida'];
-    ids.forEach(id => { 
-        const el = document.getElementById(id); 
-        if(el) el.innerHTML = "Não registrado"; 
-    });
+            const hoje = new Date().toISOString().split('T')[0];
+            const { data } = await supabaseClient
+                .from('registros_ponto')
+                .select('*')
+                .eq('matricula', sessionPerfis.matricula)
+                .gte('created_at', `${hoje}T00:00:00`)
+                .order('created_at', { ascending: true });
 
-    if (!data || data.length === 0) {
-        container.innerHTML = `<div class="text-center py-4 text-slate-400 text-xs font-semibold">Nenhuma batida hoje.</div>`;
-        return;
-    }
+            const container = document.getElementById('historico-container');
+            container.innerHTML = "";
 
-    // Agora, em vez de filtrar por nome exato, procuramos por palavras-chave
-    data.forEach(reg => {
-        const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        
-        // Atualiza a interface baseada no tipo que contém o nome chave
-        let idStatus = null;
-        if (reg.tipo_batida.includes('Entrada')) idStatus = 'status-entrada';
-        else if (reg.tipo_batida.includes('Saída Pausa')) idStatus = 'status-saida-pausa';
-        else if (reg.tipo_batida.includes('Retorno Pausa')) idStatus = 'status-retorno-pausa';
-        else if (reg.tipo_batida.includes('Saída')) idStatus = 'status-saida';
+            const mapaTipoParaStatus = {
+                'status-entrada': 'Entrada',
+                'status-saida-pausa': 'Saída Pausa',
+                'status-retorno-pausa': 'Retorno Pausa',
+                'status-saida': 'Saída'
+            };
+            const mapaTipoParaBotao = {
+                'Entrada': 'btn-entrada',
+                'Saída Pausa': 'btn-saida-pausa',
+                'Retorno Pausa': 'btn-retorno-pausa',
+                'Saída': 'btn-saida'
+            };
 
-        if(idStatus) {
-            document.getElementById(idStatus).innerHTML = `<span class="text-emerald-600 font-bold text-xs"><i class="fa-solid fa-circle-check"></i> ${hFormatada}</span>`;
+            Object.keys(mapaTipoParaStatus).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = "Não registrado";
+            });
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="text-center py-4 text-xs font-semibold" style="color:var(--ink-muted)">Nenhuma batida hoje.</div>`;
+                atualizarTotalHoras([]);
+                return;
+            }
+
+            let horaEntrada = null, horaSaidaPausa = null, horaRetornoPausa = null, horaSaidaFinal = null;
+
+            data.forEach(reg => {
+                const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                let idStatus = null;
+                if (reg.tipo_batida.includes('Entrada')) { idStatus = 'status-entrada'; horaEntrada = reg.created_at; }
+                else if (reg.tipo_batida.includes('Saída Pausa')) { idStatus = 'status-saida-pausa'; horaSaidaPausa = reg.created_at; }
+                else if (reg.tipo_batida.includes('Retorno Pausa')) { idStatus = 'status-retorno-pausa'; horaRetornoPausa = reg.created_at; }
+                else if (reg.tipo_batida.includes('Saída')) { idStatus = 'status-saida'; horaSaidaFinal = reg.created_at; }
+
+                if (idStatus) {
+                    document.getElementById(idStatus).innerHTML =
+                        `<span class="font-bold text-xs" style="color:var(--ok)"><i class="fa-solid fa-circle-check"></i> ${hFormatada}</span>`;
+                }
+
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="flex items-center justify-between text-xs px-3 py-2 rounded-lg fade-in" style="background:#F6F5F1">
+                        <span class="font-semibold" style="color:var(--ink)">${reg.tipo_batida}</span>
+                        <span class="font-mono" style="color:var(--ink-muted)">${hFormatada}</span>
+                    </div>
+                `);
+            });
+
+            // Bloqueia os tipos já registrados hoje
+            Object.entries(mapaTipoParaBotao).forEach(([tipo, btnId]) => {
+                const jaRegistrado = data.some(r => r.tipo_batida.includes(tipo));
+                const btn = document.getElementById(btnId);
+                if (btn && jaRegistrado) btn.disabled = true;
+            });
+
+            atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal });
         }
-        
-        // ... (o resto da função permanece igual)
-    });
-}
+
+        function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal } = {}) {
+            const el = document.getElementById('total-horas-dia');
+            if (!horaEntrada) { el.textContent = "Total: 0h00m / 6h"; return; }
+
+            const inicio = new Date(horaEntrada);
+            const fim = horaSaidaFinal ? new Date(horaSaidaFinal) : new Date();
+
+            let msTotais = fim - inicio;
+
+            if (horaSaidaPausa) {
+                const fimPausa = horaRetornoPausa ? new Date(horaRetornoPausa) : new Date();
+                const inicioPausa = new Date(horaSaidaPausa);
+                msTotais -= Math.max(0, fimPausa - inicioPausa);
+            }
+
+            msTotais = Math.max(0, msTotais);
+            const horas = Math.floor(msTotais / 3600000);
+            const minutos = Math.floor((msTotais % 3600000) / 60000);
+            el.textContent = `Total: ${horas}h${String(minutos).padStart(2, '0')}m / 6h`;
+        }
+
         async function registrarPonto(tipo) {
-    // 1. Verificação de permissões e estados
-    if (!streamAtivo) return alert("Câmera não está ativa. Aguarde...");
-    if (!coordsGps.lat) return alert("Aguardando GPS...");
+            if (!streamAtivo) return alert("Câmera não está ativa. Aguarde...");
+            if (!coordsGps.lat) return alert("Aguardando GPS...");
 
-    // 2. Prevenção de duplicidade: Verifica no banco se o tipo já existe hoje
-    const hoje = new Date().toISOString().split('T')[0];
-    const { data: batidasHoje } = await supabaseClient
-        .from('registros_ponto')
-        .select('tipo_batida')
-        .eq('matricula', sessionPerfis.matricula)
-        .gte('created_at', `${hoje}T00:00:00`);
+            const btnMap = {
+                'Entrada': 'btn-entrada', 'Saída Pausa': 'btn-saida-pausa',
+                'Retorno Pausa': 'btn-retorno-pausa', 'Saída': 'btn-saida'
+            };
+            const btnAtual = document.getElementById(btnMap[tipo]);
 
-    // Verifica se já existe um registro que contenha o nome do tipo atual
-    const jaRegistrado = batidasHoje?.some(r => r.tipo_batida.includes(tipo));
-    if (jaRegistrado) {
-        return alert(`O ponto "${tipo}" já foi registrado hoje.`);
-    }
+            // Prevenção de duplicidade
+            const hoje = new Date().toISOString().split('T')[0];
+            const { data: batidasHoje } = await supabaseClient
+                .from('registros_ponto')
+                .select('tipo_batida')
+                .eq('matricula', sessionPerfis.matricula)
+                .gte('created_at', `${hoje}T00:00:00`);
 
-    // 3. Lógica de Perímetro
-    let tipoFinal = tipo;
-    if (calcularDistancia(coordsGps.lat, coordsGps.lng, BIBLIOTECA_LAT, BIBLIOTECA_LNG) > RAIO_MAXIMO_METROS) {
-        if (!confirm(`Fora do perímetro regulamentar. Gravar assim mesmo?`)) return;
-        tipoFinal = `${tipo} (Fora do Perímetro)`;
-    }
+            const jaRegistrado = batidasHoje?.some(r => r.tipo_batida.includes(tipo));
+            if (jaRegistrado) return alert(`O ponto "${tipo}" já foi registrado hoje.`);
 
-    // 4. Captura da Imagem
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('photo-capture');
-    
-    // Garantir que o canvas tenha o tamanho correto
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            // Perímetro
+            let tipoFinal = tipo;
+            if (calcularDistancia(coordsGps.lat, coordsGps.lng, BIBLIOTECA_LAT, BIBLIOTECA_LNG) > RAIO_MAXIMO_METROS) {
+                if (!confirm(`Você está fora do perímetro regulamentar da biblioteca. Registrar assim mesmo?`)) return;
+                tipoFinal = `${tipo} (Fora do Perímetro)`;
+            }
 
-    // 5. Upload e Gravação
-    canvas.toBlob(async (blob) => {
-    const nArquivo = `ponto_${sessionPerfis.matricula}_${Date.now()}.png`;
-    
-    // 1. Tente subir a foto
-    const { data: uploadData, error: uploadError } = await supabaseClient.storage
-        .from('fotos_ponto')
-        .upload(nArquivo, blob, { contentType: 'image/png' });
+            if (btnAtual) btnAtual.disabled = true;
 
-    if (uploadError) {
-        console.error("Erro no upload da foto:", uploadError);
-        return alert("Erro ao enviar foto: " + uploadError.message);
-    }
+            // Captura da imagem
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('photo-capture');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // 2. Obtenha o link público
-    const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
-    console.log("URL da foto gerada:", pUrl.publicUrl); // Verifique isso no console!
+            canvas.toBlob(async (blob) => {
+                try {
+                    const nArquivo = `ponto_${sessionPerfis.matricula}_${Date.now()}.png`;
 
-    // 3. Salve no banco
-    const { error: dbError } = await supabaseClient.from('registros_ponto').insert([{
-        matricula: sessionPerfis.matricula,
-        tipo_batida: tipoFinal,
-        foto_url: pUrl.publicUrl // Este é o link que vai para a tabela
-    }]);
-    
-    if (dbError) console.error("Erro ao salvar no banco:", dbError);
-}, 'image/png');
-        
-        // Atualiza a interface mantendo a câmera ativa
-        checarStatusDoDia();
-    }, 'image/png');
-}
+                    const { error: uploadError } = await supabaseClient.storage
+                        .from('fotos_ponto')
+                        .upload(nArquivo, blob, { contentType: 'image/png' });
+
+                    if (uploadError) {
+                        alert("Erro ao enviar foto: " + uploadError.message);
+                        if (btnAtual) btnAtual.disabled = false;
+                        return;
+                    }
+
+                    const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
+
+                    const { error: dbError } = await supabaseClient.from('registros_ponto').insert([{
+                        matricula: sessionPerfis.matricula,
+                        tipo_batida: tipoFinal,
+                        foto_url: pUrl.publicUrl,
+                        latitude: coordsGps.lat,
+                        longitude: coordsGps.lng
+                    }]);
+
+                    if (dbError) {
+                        alert("Erro ao salvar registro: " + dbError.message);
+                        if (btnAtual) btnAtual.disabled = false;
+                        return;
+                    }
+
+                    checarStatusDoDia();
+                } catch (err) {
+                    alert("Erro inesperado ao registrar ponto: " + err.message);
+                    if (btnAtual) btnAtual.disabled = false;
+                }
+            }, 'image/png');
+        }
+
+        // --------------------------------------------------------------------
+        // SOLICITAÇÃO DE AJUSTE
+        // --------------------------------------------------------------------
         async function enviarSolicitacaoAjuste() {
             const data = document.getElementById('adj-data').value;
             const tipo = document.getElementById('adj-tipo').value;
             const hora = document.getElementById('adj-hora').value;
-            const motivo = document.getElementById('adj-motivo').value;
-            if(!data || !hora || !motivo) return alert("Preencha todos os dados!");
+            const motivo = document.getElementById('adj-motivo').value.trim();
 
-            await supabaseClient.from('solicitacoes_ponto').insert([{
-                usuario_id: sessionUser.id, matricula: sessionPerfis.matricula,
-                nome_estagiario: sessionPerfis.nome, data_ponto: data, tipo_batida: tipo,
-                horario_sugerido: hora, motivo: motivo
+            if (!data || !hora || !motivo) return alert("Preencha todos os dados!");
+
+            const btn = document.getElementById('btn-enviar-ajuste');
+            btn.disabled = true;
+
+            const { error } = await supabaseClient.from('solicitacoes_ponto').insert([{
+                usuario_id: sessionUser.id,
+                matricula: sessionPerfis.matricula,
+                nome_estagiario: sessionPerfis.nome,
+                data_ponto: data,
+                tipo_batida: tipo,
+                horario_sugerido: hora,
+                motivo: motivo,
+                status: 'pendente'
             }]);
-            alert("Solicitação enviada!"); document.getElementById('adj-motivo').value = "";
+
+            btn.disabled = false;
+
+            if (error) return alert("Erro ao enviar solicitação: " + error.message);
+
+            alert("Solicitação enviada!");
+            document.getElementById('adj-motivo').value = "";
         }
 
-        // Correção das imagens e injeção do reajuste corrigido
+        // --------------------------------------------------------------------
+        // PAINEL DO ADMINISTRADOR
+        // --------------------------------------------------------------------
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
         async function carregarDadosPainelAdmin() {
-            const fMatricula = document.getElementById('filtro-matricula').value;
+            const fMatricula = document.getElementById('filtro-matricula').value.trim();
             const fData = document.getElementById('filtro-data').value;
 
             let query = supabaseClient.from('registros_ponto').select('*').order('created_at', { ascending: false });
-            if(fMatricula) query = query.eq('matricula', fMatricula);
-            if(fData) query = query.gte('created_at', `${fData}T00:00:00`).lte('created_at', `${fData}T23:59:59`);
-            
-            const { data: batidas } = await query;
-            const tabela = document.getElementById('admin-tabela-ponto'); tabela.innerHTML = "";
+            if (fMatricula) query = query.eq('matricula', fMatricula);
+            if (fData) query = query.gte('created_at', `${fData}T00:00:00`).lte('created_at', `${fData}T23:59:59`);
 
-            if(batidas) {
+            const { data: batidas, error } = await query;
+            const tabela = document.getElementById('admin-tabela-ponto');
+            tabela.innerHTML = "";
+
+            if (error) {
+                tabela.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs" style="color:var(--danger)">Erro ao carregar registros: ${escapeHtml(error.message)}</td></tr>`;
+            } else if (!batidas || batidas.length === 0) {
+                tabela.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs" style="color:var(--ink-muted)">Nenhum registro encontrado.</td></tr>`;
+            } else {
                 batidas.forEach(b => {
                     const dataB = new Date(b.created_at).toLocaleDateString('pt-BR');
-                    const horaB = new Date(b.created_at).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-                    const mapLink = b.latitude ? `<a href="https://google.com/maps?q=${b.latitude},${b.longitude}" target="_blank" class="text-rose-500 font-bold"><i class="fa-solid fa-map-pin"></i> Mapa</a>` : "Sem GPS";
-                    const fotoSrc = b.foto_url ? b.foto_url : 'https://via.placeholder.com/150?text=Sem+Foto';
-                    
+                    const horaB = new Date(b.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const mapLink = b.latitude
+                        ? `<a href="https://google.com/maps?q=${b.latitude},${b.longitude}" target="_blank" rel="noopener" class="font-bold" style="color:var(--danger)"><i class="fa-solid fa-map-pin"></i> Mapa</a>`
+                        : "Sem GPS";
+                    const fotoSrc = b.foto_url || 'https://via.placeholder.com/150?text=Sem+Foto';
+
                     tabela.insertAdjacentHTML('beforeend', `
                         <tr class="hover:bg-slate-50">
-                            <td class="p-3 font-bold text-slate-700">${b.matricula}</td>
-                            <td class="p-3">${b.tipo_batida} <br> <span class="text-[10px] text-slate-400 font-mono">${dataB} às ${horaB}</span></td>
-                            <td class="p-3 flex items-center gap-2">
-                                <a href="${fotoSrc}" target="_blank">
-                                    <img src="${fotoSrc}" class="w-8 h-8 rounded object-cover border shadow-sm onerror="this.src='https://via.placeholder.com/150?text=Erro'">
-                                </a>
-                                ${mapLink}
+                            <td class="p-3 font-bold" style="color:var(--ink)">${escapeHtml(b.matricula)}</td>
+                            <td class="p-3">${escapeHtml(b.tipo_batida)} <br> <span class="text-[10px] font-mono" style="color:var(--ink-muted)">${dataB} às ${horaB}</span></td>
+                            <td class="p-3">
+                                <div class="flex items-center gap-2">
+                                    <a href="${fotoSrc}" target="_blank" rel="noopener">
+                                        <img src="${fotoSrc}" onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=Erro'" class="w-8 h-8 rounded object-cover border shadow-sm">
+                                    </a>
+                                    ${mapLink}
+                                </div>
                             </td>
-                            <td class="p-3 text-center space-x-1">
-                                <button onclick="abonarRegistro(${b.id}, ${b.abonado})" class="px-2 py-1 ${b.abonado ? 'bg-amber-500' : 'bg-slate-700'} text-white rounded font-bold text-[10px]">${b.abonado ? 'Abonado' : 'Abonar'}</button>
-                                <button onclick="alterarHorarioPonto(${b.id})" class="px-2 py-1 bg-indigo-600 text-white rounded font-bold text-[10px]">Editar</button>
+                            <td class="p-3 text-center space-x-1 whitespace-nowrap">
+                                <button onclick="abonarRegistro(${b.id}, ${!!b.abonado})" class="px-2 py-1 text-white rounded font-bold text-[10px]" style="background:${b.abonado ? 'var(--warn)' : 'var(--navy)'}">${b.abonado ? 'Abonado' : 'Abonar'}</button>
+                                <button onclick="alterarHorarioPonto(${b.id})" class="px-2 py-1 text-white rounded font-bold text-[10px]" style="background:var(--brass)">Editar</button>
                             </td>
                         </tr>
                     `);
@@ -541,27 +803,28 @@ async function deslogar() {
             }
 
             const { data: solicitacoes } = await supabaseClient.from('solicitacoes_ponto').select('*').eq('status', 'pendente');
-            const sContainer = document.getElementById('admin-solicitacoes-container'); sContainer.innerHTML = "";
+            const sContainer = document.getElementById('admin-solicitacoes-container');
+            sContainer.innerHTML = "";
 
-            if(!solicitacoes || solicitacoes.length === 0) {
-                sContainer.innerHTML = `<p class="text-center py-4 text-xs text-slate-400 font-medium">Nenhuma pendência.</p>`;
+            if (!solicitacoes || solicitacoes.length === 0) {
+                sContainer.innerHTML = `<p class="text-center py-4 text-xs font-medium" style="color:var(--ink-muted)">Nenhuma pendência.</p>`;
                 return;
             }
 
             solicitacoes.forEach(s => {
                 sContainer.insertAdjacentHTML('beforeend', `
-                    <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2">
+                    <div class="border p-3 rounded-xl space-y-2" style="background:#F6F5F1; border-color:#E7E4DA">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h4 class="font-bold text-slate-800 text-xs">${s.nome_estagiario}</h4>
-                                <p class="text-[10px] text-slate-400 font-mono">${s.matricula}</p>
+                                <h4 class="font-bold text-xs" style="color:var(--ink)">${escapeHtml(s.nome_estagiario)}</h4>
+                                <p class="text-[10px] font-mono" style="color:var(--ink-muted)">${escapeHtml(s.matricula)}</p>
                             </div>
-                            <span class="text-[10px] bg-indigo-50 text-indigo-700 font-black px-1.5 py-0.5 rounded">${s.tipo_batida}</span>
+                            <span class="text-[10px] font-black px-1.5 py-0.5 rounded" style="background:#E9E4D6; color:var(--navy)">${escapeHtml(s.tipo_batida)}</span>
                         </div>
-                        <p class="text-[11px] text-slate-600 bg-white p-1.5 border rounded"><strong>Ajuste:</strong> ${s.data_ponto} às ${s.horario_sugerido}<br><strong>Motivo:</strong> ${s.motivo}</p>
+                        <p class="text-[11px] bg-white p-1.5 border rounded" style="color:var(--ink); border-color:#E7E4DA"><strong>Ajuste:</strong> ${escapeHtml(s.data_ponto)} às ${escapeHtml(s.horario_sugerido)}<br><strong>Motivo:</strong> ${escapeHtml(s.motivo)}</p>
                         <div class="flex gap-2">
-                            <button onclick="responderSolicitacao(${s.id}, 'aprovado', '${s.matricula}', '${s.data_ponto}', '${s.horario_sugerido}', '${s.tipo_batida}')" class="flex-1 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded">Aprovar</button>
-                            <button onclick="responderSolicitacao(${s.id}, 'rejeitado')" class="flex-1 py-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold rounded">Rejeitar</button>
+                            <button onclick="responderSolicitacao(${s.id}, 'aprovado', '${escapeHtml(s.matricula)}', '${escapeHtml(s.data_ponto)}', '${escapeHtml(s.horario_sugerido)}', '${escapeHtml(s.tipo_batida)}')" class="flex-1 py-1 text-white text-[10px] font-bold rounded" style="background:var(--ok)">Aprovar</button>
+                            <button onclick="responderSolicitacao(${s.id}, 'rejeitado')" class="flex-1 py-1 text-white text-[10px] font-bold rounded" style="background:var(--danger)">Rejeitar</button>
                         </div>
                     </div>
                 `);
@@ -570,75 +833,80 @@ async function deslogar() {
 
         async function abonarRegistro(id, estadoAtual) {
             const justificativa = estadoAtual ? null : prompt("Insira a justificativa legal do abono:");
-            if(!estadoAtual && !justificativa) return;
-            await supabaseClient.from('registros_ponto').update({ abonado: !estadoAtual, justificativa_abono: justificativa }).eq('id', id);
+            if (!estadoAtual && !justificativa) return;
+
+            const { error } = await supabaseClient.from('registros_ponto')
+                .update({ abonado: !estadoAtual, justificativa_abono: justificativa })
+                .eq('id', id);
+
+            if (error) return alert("Erro ao atualizar abono: " + error.message);
             carregarDadosPainelAdmin();
         }
 
         async function alterarHorarioPonto(id) {
             const nH = prompt("Novo horário no padrão ISO (Exemplo: 2026-07-12T14:30:00):");
-            if(!nH) return;
-            await supabaseClient.from('registros_ponto').update({ created_at: new Date(nH).toISOString(), editado_por_admin_id: sessionUser.id }).eq('id', id);
-            alert("Horário alterado."); carregarDadosPainelAdmin();
+            if (!nH) return;
+
+            const novaData = new Date(nH);
+            if (isNaN(novaData.getTime())) return alert("Data/hora inválida. Use o formato AAAA-MM-DDTHH:MM:SS.");
+
+            const { error } = await supabaseClient.from('registros_ponto')
+                .update({ created_at: novaData.toISOString(), editado_por_admin_id: sessionUser.id })
+                .eq('id', id);
+
+            if (error) return alert("Erro ao alterar horário: " + error.message);
+            alert("Horário alterado.");
+            carregarDadosPainelAdmin();
         }
 
-        // ATALHO COMPATÍVEL COM CORREÇÃO DE HORÁRIO DO BANCO
-       async function responderSolicitacao(id, status, matricula, data, hora, tipo) {
-    if (status === 'aprovado') {
-        // Exemplo de entrada: data='2026-07-12', hora='14:30'
-        // Montamos um objeto Date separando os componentes para evitar ambiguidade
-        const [ano, mes, dia] = data.split('-');
-        const [h, m] = hora.split(':');
-        
-        // Criamos o objeto Data com os campos separados (mês começa em 0 no JS)
-        const dataMontada = new Date(ano, mes - 1, dia, h, m, 0);
+        async function responderSolicitacao(id, status, matricula, data, hora, tipo) {
+            if (status === 'aprovado') {
+                const [ano, mes, dia] = data.split('-');
+                const [h, m] = hora.split(':');
+                const dataMontada = new Date(ano, mes - 1, dia, h, m, 0);
 
-        const { error: insertError } = await supabaseClient
-            .from('registros_ponto')
-            .insert([{
-                matricula: matricula,
-                tipo_batida: `${tipo} (Ajuste Manual)`,
-                created_at: dataMontada.toISOString(), // Agora a data é válida
-                foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
-            }]);
+                const { error: insertError } = await supabaseClient.from('registros_ponto').insert([{
+                    matricula: matricula,
+                    tipo_batida: `${tipo} (Ajuste Manual)`,
+                    created_at: dataMontada.toISOString(),
+                    foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
+                }]);
 
-        if (insertError) {
-            console.error("Erro ao inserir:", insertError);
-            return alert("Erro ao salvar ajuste no banco: " + insertError.message);
+                if (insertError) return alert("Erro ao salvar ajuste no banco: " + insertError.message);
+            }
+
+            const { error: updateError } = await supabaseClient
+                .from('solicitacoes_ponto')
+                .update({ status: status })
+                .eq('id', id);
+
+            if (updateError) return alert("Erro ao atualizar status: " + updateError.message);
+
+            alert(`Solicitação processada com sucesso!`);
+            carregarDadosPainelAdmin();
         }
-    }
-    
-    // Atualiza o status da solicitação
-    const { error: updateError } = await supabaseClient
-        .from('solicitacoes_ponto')
-        .update({ status: status })
-        .eq('id', id);
-
-    if (updateError) {
-        console.error("Erro ao atualizar status:", updateError);
-        return alert("Erro ao atualizar status: " + updateError.message);
-    }
-
-    alert(`Solicitação processada com sucesso!`);
-    carregarDadosPainelAdmin();
-}
 
         async function baixarFolhaPonto() {
-            const fMatricula = document.getElementById('filtro-matricula').value;
+            const fMatricula = document.getElementById('filtro-matricula').value.trim();
             let query = supabaseClient.from('registros_ponto').select('matricula, tipo_batida, created_at, abonado, justificativa_abono');
-            if(fMatricula) query = query.eq('matricula', fMatricula);
-            
-            const { data } = await query;
-            if(!data || data.length === 0) return alert("Nenhum dado localizado.");
+            if (fMatricula) query = query.eq('matricula', fMatricula);
 
-            let csv = "data:text/csv;charset=utf-8,Matricula,Tipo Batida,Data/Hora Original,Abonado,Justificativa\n";
-            data.forEach(r => { csv += `${r.matricula},"${r.tipo_batida}","${r.created_at}",${r.abonado},"${r.justificativa_abono || ''}"\n`; });
-            const link = document.createElement("a"); link.setAttribute("href", encodeURI(csv));
+            const { data, error } = await query;
+            if (error) return alert("Erro ao gerar folha: " + error.message);
+            if (!data || data.length === 0) return alert("Nenhum dado localizado.");
+
+            const linhas = data.map(r =>
+                `${r.matricula},"${r.tipo_batida}","${r.created_at}",${r.abonado},"${(r.justificativa_abono || '').replace(/"/g, '""')}"`
+            );
+            const csv = "data:text/csv;charset=utf-8,Matricula,Tipo Batida,Data/Hora Original,Abonado,Justificativa\n" + linhas.join("\n");
+
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csv));
             link.setAttribute("download", `Folha_Ponto_${fMatricula || 'Geral'}.csv`);
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
-
-        window.addEventListener('DOMContentLoaded', () => gerenciarTelas('login'));
     </script>
 </body>
 </html>
