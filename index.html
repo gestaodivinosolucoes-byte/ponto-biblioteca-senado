@@ -60,7 +60,7 @@
         </div>
     </section>
 
-    <!-- 2. PAINEL DO ESTAGIÁRIO -->
+    <!-- 2. PAINEL DO ESTAGIÁRIO (Fica totalmente oculto para o Admin) -->
     <section id="view-estagiario" class="hidden flex-1 max-w-md mx-auto w-full px-4 py-6 flex flex-col space-y-5">
         <!-- Bloco de Identificação Dinâmica -->
         <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white shadow-xl relative overflow-hidden">
@@ -77,7 +77,7 @@
         <!-- Câmera e GPS -->
         <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-col items-center">
             <div class="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
-                <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></section>
+                <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
                 <canvas id="photo-capture" class="w-full h-full object-cover hidden"></canvas>
             </div>
             <button id="btn-retake" class="mt-3 px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg hidden">Tirar Nova Foto</button>
@@ -123,7 +123,7 @@
             </button>
         </div>
 
-        <!-- Solicitação de Ajuste Manual -->
+        <!-- SOLICITAÇÃO DE AJUSTE MANUAL (ALOCADA EXCLUSIVAMENTE AQUI DENTRO) -->
         <div class="bg-slate-100 rounded-2xl p-4 border border-slate-200 space-y-3">
             <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider"><i class="fa-solid fa-pen-to-square mr-1"></i> Solicitar Ajuste de Ponto</h3>
             <div class="grid grid-cols-2 gap-2">
@@ -160,7 +160,7 @@
         <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-1">Filtrar por Matrícula do Estagiário</label>
-                <input type="text" id="filtro-matricula" oninput="carregarDadosPainelAdmin()" placeholder="Ex: 2026-089 (Deixe em branco para ver todos)" class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs">
+                <input type="text" id="filtro-matricula" oninput="carregarDadosPainelAdmin()" placeholder="Ex: E-2026 (Deixe vazio para ver todos)" class="w-full px-3 py-1.5 border border-slate-200 rounded-xl text-xs">
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-1">Data Específica</label>
@@ -225,7 +225,7 @@
             if(data) data.textContent = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }, 1000);
 
-        // Controle de Estado de Telas Visuais
+        // Controle de Estado de Telas Visuais - CORRIGIDO (Oculta o painel do estagiário inteiramente para o Admin)
         function gerenciarTelas(telaAtiva) {
             document.getElementById('view-login').classList.add('hidden');
             document.getElementById('view-estagiario').classList.add('hidden');
@@ -242,6 +242,11 @@
             } else if (telaAtiva === 'admin') {
                 document.getElementById('view-admin').classList.remove('hidden');
                 document.getElementById('btn-logout').classList.remove('hidden');
+                
+                if (streamAtivo) {
+                    streamAtivo.getTracks().forEach(track => track.stop());
+                    streamAtivo = null;
+                }
                 carregarDadosPainelAdmin();
             }
         }
@@ -258,7 +263,6 @@
 
             sessionUser = authData.user;
 
-            // Coleta regras de função da tabela complementar 'perfis'
             const { data: perfilData, error: perfilError } = await supabaseClient
                 .from('perfis')
                 .select('*')
@@ -313,9 +317,6 @@
             }
         }
 
-        // ==========================================
-        // CÓDIGO DO PAINEL DO ESTAGIÁRIO (MANTIDO E ADAPTADO)
-        // ==========================================
         const BIBLIOTECA_LAT = -15.8003;
         const BIBLIOTECA_LNG = -47.8790;
         const RAIO_MAXIMO_METROS = 100;
@@ -451,14 +452,11 @@
             document.getElementById('adj-motivo').value = "";
         }
 
-        // ==========================================
-        // CÓDIGO DA CENTRAL DO ADMINISTRADOR
-        // ==========================================
+        // Central do Administrador
         async function carregarDadosPainelAdmin() {
             const fMatricula = document.getElementById('filtro-matricula').value;
             const fData = document.getElementById('filtro-data').value;
 
-            // 1. Carrega Histórico Geral
             let query = supabaseClient.from('registros_ponto').select('*').order('created_at', { ascending: false });
             if(fMatricula) query = query.eq('matricula', fMatricula);
             if(fData) {
@@ -494,7 +492,6 @@
                 });
             }
 
-            // 2. Carrega Solicitações
             const { data: solicitacoes } = await supabaseClient.from('solicitacoes_ponto').select('*').eq('status', 'pendente');
             const sContainer = document.getElementById('admin-solicitacoes-container');
             sContainer.innerHTML = "";
@@ -544,7 +541,6 @@
 
         async function responderSolicitacao(id, status, matricula, data, hora, tipo) {
             if (status === 'aprovado') {
-                // Insere automaticamente a batida manual informada com marcador "Ajustado"
                 const timestampGerado = `${data}T${hora}:00.000Z`;
                 await supabaseClient.from('registros_ponto').insert([{
                     matricula: matricula,
