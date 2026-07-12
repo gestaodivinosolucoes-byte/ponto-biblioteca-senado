@@ -546,7 +546,8 @@
         // --------------------------------------------------------------------
         // REGISTRO DE PONTO
         // --------------------------------------------------------------------
-        async function checarStatusDoDia() {
+        // --- 1. FUNÇÃO PARA CHECAR STATUS E HABILITAR BOTÕES ---
+async function checarStatusDoDia() {
     if (!sessionPerfis) return;
 
     const hoje = new Date().toISOString().split('T')[0];
@@ -557,9 +558,6 @@
         .gte('created_at', `${hoje}T00:00:00`)
         .order('created_at', { ascending: true });
 
-    const container = document.getElementById('historico-container');
-    if (container) container.innerHTML = "";
-
     const mapaTipoParaBotao = {
         'Entrada': 'btn-entrada',
         'Saída Pausa': 'btn-saida-pausa',
@@ -567,54 +565,74 @@
         'Saida_Final': 'btn-saida'
     };
 
-    // Reseta status visuais
     ['status-entrada', 'status-saida-pausa', 'status-retorno-pausa', 'status-saida'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = "Não registrado";
     });
 
-    if (!data || data.length === 0) {
-        if (container) container.innerHTML = `<div class="text-center py-4 text-xs font-semibold" style="color:var(--ink-muted)">Nenhuma batida hoje.</div>`;
-        atualizarTotalHoras([]);
-        return;
+    if (data) {
+        data.forEach(reg => {
+            const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            if (reg.tipo_batida === 'Entrada') document.getElementById('status-entrada').innerHTML = hFormatada;
+            else if (reg.tipo_batida === 'Saída Pausa') document.getElementById('status-saida-pausa').innerHTML = hFormatada;
+            else if (reg.tipo_batida === 'Retorno Pausa') document.getElementById('status-retorno-pausa').innerHTML = hFormatada;
+            else if (reg.tipo_batida === 'Saida_Final') document.getElementById('status-saida').innerHTML = hFormatada;
+        });
     }
 
-    let horaEntrada = null, horaSaidaPausa = null, horaRetornoPausa = null, horaSaidaFinal = null;
-
-    data.forEach(reg => {
-        const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        
-        if (reg.tipo_batida.includes('Entrada')) { document.getElementById('status-entrada').innerHTML = hFormatada; horaEntrada = reg.created_at; }
-        else if (reg.tipo_batida.includes('Saída Pausa')) { document.getElementById('status-saida-pausa').innerHTML = hFormatada; horaSaidaPausa = reg.created_at; }
-        else if (reg.tipo_batida.includes('Retorno Pausa')) { document.getElementById('status-retorno-pausa').innerHTML = hFormatada; horaRetornoPausa = reg.created_at; }
-        else if (reg.tipo_batida.includes('Saida_Final')) { document.getElementById('status-saida').innerHTML = hFormatada; horaSaidaFinal = reg.created_at; }
-
-        if (container) {
-            container.insertAdjacentHTML('beforeend', `
-                <div class="flex items-center justify-between text-xs px-3 py-2 rounded-lg fade-in" style="background:#F6F5F1">
-                    <span class="font-semibold" style="color:var(--ink)">${reg.tipo_batida}</span>
-                    <span class="font-mono" style="color:var(--ink-muted)">${hFormatada}</span>
-                </div>
-            `);
-        }
-    });
-
-    // Lógica de Bloqueio e Regra de 10 minutos
     Object.entries(mapaTipoParaBotao).forEach(([tipo, btnId]) => {
         const btn = document.getElementById(btnId);
         if (!btn) return;
-
-        const ultimaBatida = data[data.length - 1];
+        const ultimaBatida = data && data.length > 0 ? data[data.length - 1] : null;
         const agora = new Date();
-        const difMinutos = (agora - new Date(ultimaBatida.created_at)) / (1000 * 60);
-        const jaRegistrado = data.some(r => r.tipo_batida.includes(tipo));
-
-        const bloqueado = jaRegistrado || (difMinutos < 10 && tipo !== 'Saida_Final');
-
+        const jaRegistrado = data && data.some(r => r.tipo_batida === tipo);
+        
+        let bloqueado = jaRegistrado;
+        if (ultimaBatida && tipo !== 'Saida_Final') {
+            const dif = (agora - new Date(ultimaBatida.created_at)) / (1000 * 60);
+            if (dif < 10) bloqueado = true;
+        }
         btn.disabled = bloqueado;
         btn.style.opacity = bloqueado ? "0.5" : "1";
-        btn.style.cursor = bloqueado ? "not-allowed" : "pointer";
     });
+}
+
+// --- 2. FUNÇÃO QUE VOCÊ APAGOU (RECONSTRUÍDA) ---
+async function registrarPonto(tipo) {
+    if (!streamAtivo) return alert("Câmera não está ativa.");
+    
+    // Captura da imagem
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('photo-capture');
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(async (blob) => {
+        const nArquivo = `ponto_${sessionPerfis.matricula}_${Date.now()}.png`;
+        
+        // Upload da foto
+        const { error: uploadError } = await supabaseClient.storage.from('fotos_ponto').upload(nArquivo, blob);
+        if (uploadError) return alert("Erro foto: " + uploadError.message);
+
+        const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
+
+        // Inserção no banco
+        const { error: dbError } = await supabaseClient.from('registros_ponto').insert([{
+            matricula: sessionPerfis.matricula,
+            tipo_batida: tipo,
+            foto_url: pUrl.publicUrl,
+            latitude: coordsGps.lat,
+            longitude: coordsGps.lng
+        }]);
+
+        if (dbError) return alert("Erro banco: " + dbError.message);
+
+        alert("Ponto registrado com sucesso!");
+        checarStatusDoDia(); // Atualiza os botões após bater
+    }, 'image/png');
+}
+
+// --- 3. CHAMADA INICIAL ---
+checarStatusDoDia();
 
     atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal });
 }
