@@ -547,147 +547,98 @@
         // REGISTRO DE PONTO
         // --------------------------------------------------------------------
         async function checarStatusDoDia() {
-            if (!sessionPerfis) return;
+    if (!sessionPerfis) return;
 
-            const hoje = new Date().toISOString().split('T')[0];
-            const { data } = await supabaseClient
-                .from('registros_ponto')
-                .select('*')
-                .eq('matricula', sessionPerfis.matricula)
-                .gte('created_at', `${hoje}T00:00:00`)
-                .order('created_at', { ascending: true });
+    const hoje = new Date().toISOString().split('T')[0];
+    const { data } = await supabaseClient
+        .from('registros_ponto')
+        .select('*')
+        .eq('matricula', sessionPerfis.matricula)
+        .gte('created_at', `${hoje}T00:00:00`)
+        .order('created_at', { ascending: true });
 
-            const container = document.getElementById('historico-container');
-            container.innerHTML = "";
+    const container = document.getElementById('historico-container');
+    if (container) container.innerHTML = "";
 
-            const mapaTipoParaStatus = {
-                'status-entrada': 'Entrada',
-                'status-saida-pausa': 'Saída Pausa',
-                'status-retorno-pausa': 'Retorno Pausa',
-                'status-saida-final': 'Saída Final'
-            };
-            async function checarStatusDoDia() {
-            if (!sessionPerfis) return;
+    const mapaTipoParaBotao = {
+        'Entrada': 'btn-entrada',
+        'Saída Pausa': 'btn-saida-pausa',
+        'Retorno Pausa': 'btn-retorno-pausa',
+        'Saida_Final': 'btn-saida'
+    };
 
-            const hoje = new Date().toISOString().split('T')[0];
-            const { data } = await supabaseClient
-                .from('registros_ponto')
-                .select('*')
-                .eq('matricula', sessionPerfis.matricula)
-                .gte('created_at', `${hoje}T00:00:00`)
-                .order('created_at', { ascending: true });
+    // Reseta status visuais
+    ['status-entrada', 'status-saida-pausa', 'status-retorno-pausa', 'status-saida'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = "Não registrado";
+    });
 
-            const container = document.getElementById('historico-container');
-            container.innerHTML = "";
+    if (!data || data.length === 0) {
+        if (container) container.innerHTML = `<div class="text-center py-4 text-xs font-semibold" style="color:var(--ink-muted)">Nenhuma batida hoje.</div>`;
+        atualizarTotalHoras([]);
+        return;
+    }
 
-            const mapaTipoParaStatus = {
-                'status-entrada': 'Entrada',
-                'status-saida-pausa': 'Saída Pausa',
-                'status-retorno-pausa': 'Retorno Pausa',
-                'status-saida-final': 'Saída Final'
-            };
-            
-            const mapaTipoParaBotao = {
-                'Entrada': 'btn-entrada',
-                'Saída Pausa': 'btn-saida-pausa',
-                'Retorno Pausa': 'btn-retorno-pausa',
-                'Saída Final': 'btn-saida'
-            };
+    let horaEntrada = null, horaSaidaPausa = null, horaRetornoPausa = null, horaSaidaFinal = null;
 
-            Object.keys(mapaTipoParaStatus).forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = "Não registrado";
-            });
+    data.forEach(reg => {
+        const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        if (reg.tipo_batida.includes('Entrada')) { document.getElementById('status-entrada').innerHTML = hFormatada; horaEntrada = reg.created_at; }
+        else if (reg.tipo_batida.includes('Saída Pausa')) { document.getElementById('status-saida-pausa').innerHTML = hFormatada; horaSaidaPausa = reg.created_at; }
+        else if (reg.tipo_batida.includes('Retorno Pausa')) { document.getElementById('status-retorno-pausa').innerHTML = hFormatada; horaRetornoPausa = reg.created_at; }
+        else if (reg.tipo_batida.includes('Saida_Final')) { document.getElementById('status-saida').innerHTML = hFormatada; horaSaidaFinal = reg.created_at; }
 
-            if (!data || data.length === 0) {
-                container.innerHTML = `<div class="text-center py-4 text-xs font-semibold" style="color:var(--ink-muted)">Nenhuma batida hoje.</div>`;
-                atualizarTotalHoras([]);
-                return;
-            }
-
-            let horaEntrada = null, horaSaidaPausa = null, horaRetornoPausa = null, horaSaidaFinal = null;
-
-            data.forEach(reg => {
-                const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                let idStatus = null;
-                
-                if (reg.tipo_batida.includes('Entrada')) { idStatus = 'status-entrada'; horaEntrada = reg.created_at; }
-                else if (reg.tipo_batida.includes('Saída Pausa')) { idStatus = 'status-saida-pausa'; horaSaidaPausa = reg.created_at; }
-                else if (reg.tipo_batida.includes('Retorno Pausa')) { idStatus = 'status-retorno-pausa'; horaRetornoPausa = reg.created_at; }
-                else if (reg.tipo_batida.includes('Saída Final')) { idStatus = 'status-saida-final'; horaSaidaFinal = reg.created_at; }
-
-                if (idStatus) {
-                    document.getElementById(idStatus).innerHTML = `<span class="font-bold text-xs" style="color:var(--ok)"><i class="fa-solid fa-circle-check"></i> ${hFormatada}</span>`;
-                }
-
-                container.insertAdjacentHTML('beforeend', `
-                    <div class="flex items-center justify-between text-xs px-3 py-2 rounded-lg fade-in" style="background:#F6F5F1">
-                        <span class="font-semibold" style="color:var(--ink)">${reg.tipo_batida}</span>
-                        <span class="font-mono" style="color:var(--ink-muted)">${hFormatada}</span>
-                    </div>
-                `);
-            });
-
-            // Lógica de Bloqueio, Aparência e Regra de 10 minutos
-            Object.entries(mapaTipoParaBotao).forEach(([tipo, btnId]) => {
-                const btn = document.getElementById(btnId);
-                if (!btn) return;
-
-                const ultimaBatida = data.length > 0 ? data[data.length - 1] : null;
-                const agora = new Date();
-                let difMinutos = 999;
-                
-                if (ultimaBatida) {
-                    difMinutos = (agora - new Date(ultimaBatida.created_at)) / (1000 * 60);
-                }
-
-                const jaRegistrado = data.some(r => r.tipo_batida.includes(tipo));
-
-                if (jaRegistrado || (ultimaBatida && difMinutos < 10 && tipo !== 'Saída Final')) {
-                    btn.disabled = true;
-                    btn.style.opacity = "0.5";
-                    btn.style.cursor = "not-allowed";
-                } else {
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
-                    btn.style.cursor = "pointer";
-                }
-            });
-
-            atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal });
+        if (container) {
+            container.insertAdjacentHTML('beforeend', `
+                <div class="flex items-center justify-between text-xs px-3 py-2 rounded-lg fade-in" style="background:#F6F5F1">
+                    <span class="font-semibold" style="color:var(--ink)">${reg.tipo_batida}</span>
+                    <span class="font-mono" style="color:var(--ink-muted)">${hFormatada}</span>
+                </div>
+            `);
         }
+    });
 
-        function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal } = {}) {
-            const el = document.getElementById('total-horas-dia');
-            if (!el) return;
-            if (!horaEntrada) { el.textContent = "Total: 0h00m / 6h"; return; }
+    // Lógica de Bloqueio e Regra de 10 minutos
+    Object.entries(mapaTipoParaBotao).forEach(([tipo, btnId]) => {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
 
-            const inicio = new Date(horaEntrada);
-            const fim = horaSaidaFinal ? new Date(horaSaidaFinal) : new Date();
-            let msTotais = fim - inicio;
+        const ultimaBatida = data[data.length - 1];
+        const agora = new Date();
+        const difMinutos = (agora - new Date(ultimaBatida.created_at)) / (1000 * 60);
+        const jaRegistrado = data.some(r => r.tipo_batida.includes(tipo));
 
-            if (horaSaidaPausa) {
-                const fimPausa = horaRetornoPausa ? new Date(horaRetornoPausa) : new Date();
-                const inicioPausa = new Date(horaSaidaPausa);
-                msTotais -= Math.max(0, fimPausa - inicioPausa);
-            }
+        const bloqueado = jaRegistrado || (difMinutos < 10 && tipo !== 'Saida_Final');
 
-            msTotais = Math.max(0, msTotais);
-            const horas = Math.floor(msTotais / 3600000);
-            const minutos = Math.floor((msTotais % 3600000) / 60000);
-            el.textContent = `Total: ${horas}h${String(minutos).padStart(2, '0')}m / 6h`;
-        }
-                    checarStatusDoDia();
-                } catch (err) {
-                    alert("Erro inesperado ao registrar ponto: " + err.message);
-                    if (btnAtual) btnAtual.disabled = false;
-                }
-            }, 'image/png');
-        }
+        btn.disabled = bloqueado;
+        btn.style.opacity = bloqueado ? "0.5" : "1";
+        btn.style.cursor = bloqueado ? "not-allowed" : "pointer";
+    });
 
-        // --------------------------------------------------------------------
-        // SOLICITAÇÃO DE AJUSTE
-        // --------------------------------------------------------------------
+    atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal });
+}
+
+function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal } = {}) {
+    const el = document.getElementById('total-horas-dia');
+    if (!el) return;
+    if (!horaEntrada) { el.textContent = "Total: 0h00m / 6h"; return; }
+
+    const inicio = new Date(horaEntrada);
+    const fim = horaSaidaFinal ? new Date(horaSaidaFinal) : new Date();
+    let msTotais = fim - inicio;
+
+    if (horaSaidaPausa) {
+        const fimPausa = horaRetornoPausa ? new Date(horaRetornoPausa) : new Date();
+        const inicioPausa = new Date(horaSaidaPausa);
+        msTotais -= Math.max(0, fimPausa - inicioPausa);
+    }
+
+    msTotais = Math.max(0, msTotais);
+    const horas = Math.floor(msTotais / 3600000);
+    const minutos = Math.floor((msTotais % 3600000) / 60000);
+    el.textContent = `Total: ${horas}h${String(minutos).padStart(2, '0')}m / 6h`;
+}
         async function enviarSolicitacaoAjuste() {
             const data = document.getElementById('adj-data').value;
             const tipo = document.getElementById('adj-tipo').value;
