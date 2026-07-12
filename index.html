@@ -181,7 +181,7 @@
                 <div class="flex items-center space-x-3"><div class="font-bold text-lg" style="color:#0E7C8C"><i class="fa-solid fa-briefcase"></i></div><div class="text-left"><p class="text-sm font-bold" style="color:var(--ink)">Retorno Intervalo</p></div></div>
                 <div id="status-retorno-pausa" class="text-xs italic" style="color:var(--ink-muted)">Não registrado</div>
             </button>
-            <button id="btn-saida" disabled class="point-btn w-full bg-white border p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]" style="border-color:#E7E4DA" onclick="registrarPonto('Saída')">
+            <button id="btn-saida" disabled class="point-btn w-full bg-white border p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]" style="border-color:#E7E4DA" onclick="registrarPonto('Saida_Final')">
                 <div class="flex items-center space-x-3"><div class="font-bold text-lg" style="color:var(--danger)"><i class="fa-solid fa-right-from-bracket"></i></div><div class="text-left"><p class="text-sm font-bold" style="color:var(--ink)">Saída Final</p></div></div>
                 <div id="status-saida" class="text-xs italic" style="color:var(--ink-muted)">Não registrado</div>
             </button>
@@ -196,7 +196,7 @@
                     <option value="Entrada">Entrada</option>
                     <option value="Saída Pausa">Saída Intervalo</option>
                     <option value="Retorno Pausa">Retorno Intervalo</option>
-                    <option value="Saída">Saída Final</option>
+                    <option value="Saída Final">Saída Final</option>
                 </select>
             </div>
             <div class="grid grid-cols-3 gap-2 items-center">
@@ -564,13 +564,13 @@
                 'status-entrada': 'Entrada',
                 'status-saida-pausa': 'Saída Pausa',
                 'status-retorno-pausa': 'Retorno Pausa',
-                'status-saida': 'Saída'
+                'status-saida-final': 'Saída Final'
             };
             const mapaTipoParaBotao = {
                 'Entrada': 'btn-entrada',
                 'Saída Pausa': 'btn-saida-pausa',
                 'Retorno Pausa': 'btn-retorno-pausa',
-                'Saída': 'btn-saida'
+                'Saida Final': 'btn-Saida-Final'
             };
 
             Object.keys(mapaTipoParaStatus).forEach(id => {
@@ -593,7 +593,7 @@
                 if (reg.tipo_batida.includes('Entrada')) { idStatus = 'status-entrada'; horaEntrada = reg.created_at; }
                 else if (reg.tipo_batida.includes('Saída Pausa')) { idStatus = 'status-saida-pausa'; horaSaidaPausa = reg.created_at; }
                 else if (reg.tipo_batida.includes('Retorno Pausa')) { idStatus = 'status-retorno-pausa'; horaRetornoPausa = reg.created_at; }
-                else if (reg.tipo_batida.includes('Saída')) { idStatus = 'status-saida'; horaSaidaFinal = reg.created_at; }
+                else if (reg.tipo_batida.includes('Saida Final')) { idStatus = 'status-saida-final'; horaSaidaFinal = reg.created_at; }
 
                 if (idStatus) {
                     document.getElementById(idStatus).innerHTML =
@@ -645,7 +645,7 @@
 
             const btnMap = {
                 'Entrada': 'btn-entrada', 'Saída Pausa': 'btn-saida-pausa',
-                'Retorno Pausa': 'btn-retorno-pausa', 'Saída': 'btn-saida'
+                'Retorno Pausa': 'btn-retorno-pausa', 'Saída_Final': 'btn-saida-final'
             };
             const btnAtual = document.getElementById(btnMap[tipo]);
 
