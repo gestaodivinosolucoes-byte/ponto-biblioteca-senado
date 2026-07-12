@@ -470,39 +470,44 @@
 
         // ATALHO COMPATÍVEL COM CORREÇÃO DE HORÁRIO DO BANCO
        async function responderSolicitacao(id, status, matricula, data, hora, tipo) {
-            if (status === 'aprovado') {
-                const dataMontada = new Date(`${data}T${hora}:00`);
-                
-                // 1. Tenta inserir o registro
-                const { data: insertData, error: insertError } = await supabaseClient
-                    .from('registros_ponto')
-                    .insert([{
-                        matricula: matricula,
-                        tipo_batida: `${tipo} (Ajuste Manual)`,
-                        created_at: dataMontada.toISOString(),
-                        foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
-                    }]);
+    if (status === 'aprovado') {
+        // Exemplo de entrada: data='2026-07-12', hora='14:30'
+        // Montamos um objeto Date separando os componentes para evitar ambiguidade
+        const [ano, mes, dia] = data.split('-');
+        const [h, m] = hora.split(':');
+        
+        // Criamos o objeto Data com os campos separados (mês começa em 0 no JS)
+        const dataMontada = new Date(ano, mes - 1, dia, h, m, 0);
 
-                if (insertError) {
-                    console.error("Erro ao inserir:", insertError);
-                    return alert("Erro ao salvar ajuste: " + insertError.message);
-                }
-            }
-            
-            // 2. Atualiza o status da solicitação
-            const { error: updateError } = await supabaseClient
-                .from('solicitacoes_ponto')
-                .update({ status: status })
-                .eq('id', id);
+        const { error: insertError } = await supabaseClient
+            .from('registros_ponto')
+            .insert([{
+                matricula: matricula,
+                tipo_batida: `${tipo} (Ajuste Manual)`,
+                created_at: dataMontada.toISOString(), // Agora a data é válida
+                foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
+            }]);
 
-            if (updateError) {
-                console.error("Erro ao atualizar status:", updateError);
-                return alert("Erro ao atualizar status: " + updateError.message);
-            }
-
-            alert(`Solicitação processada com sucesso!`);
-            carregarDadosPainelAdmin();
+        if (insertError) {
+            console.error("Erro ao inserir:", insertError);
+            return alert("Erro ao salvar ajuste no banco: " + insertError.message);
         }
+    }
+    
+    // Atualiza o status da solicitação
+    const { error: updateError } = await supabaseClient
+        .from('solicitacoes_ponto')
+        .update({ status: status })
+        .eq('id', id);
+
+    if (updateError) {
+        console.error("Erro ao atualizar status:", updateError);
+        return alert("Erro ao atualizar status: " + updateError.message);
+    }
+
+    alert(`Solicitação processada com sucesso!`);
+    carregarDadosPainelAdmin();
+}
 
         async function baixarFolhaPonto() {
             const fMatricula = document.getElementById('filtro-matricula').value;
