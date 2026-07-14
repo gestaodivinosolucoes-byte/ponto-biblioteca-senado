@@ -504,7 +504,10 @@
     const SUPABASE_URL = 'https://vsncncitcuxkkajglmlp.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_503cQ1xQfSlz0VOe3CNhoA_BJXpzgKB'; // <--- VOCÊ PRECISA DEFINIR ESSA VARIÁVEL!
 
-        async function fazerLogin(email, password) {
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 3. Suas funções e variáveis
+    async function fazerLogin(email, password) {
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password,
@@ -518,19 +521,10 @@
         console.log("Login com sucesso!");
     }
 
-    // 2. Inicialize o cliente corretamente
-    // Se você carregou o script do Supabase, o objeto global é 'supabase'
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // 3. Agora, use 'supabase' em todo o resto do seu código, incluindo a linha 882
-    // Se na linha 882 você estiver usando 'supabaseClient', mude para 'supabase'
-    
     const LOCAL_REFERENCIA = { lat: -15.799837, lng: -47.864203 };
     const DISTANCIA_MAX_M = 800;
 
     let sessionUser = null;
-    
-    // ... restante do seu código
 </script>
         let sessionPerfis = null;
         let streamAtivo = null;
