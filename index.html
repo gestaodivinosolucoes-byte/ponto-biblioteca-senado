@@ -555,7 +555,7 @@
         function fecharModalConfirmacao() { document.getElementById('modal-confirmacao').classList.add('hidden'); }
 
         // ---------- Realtime ----------
-        supabaseClient
+        supabase
             .channel('canal-ponto')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registros_ponto' }, () => {
                 if (sessionPerfis && sessionPerfis.role !== 'admin') checarStatusDoDia();
@@ -596,11 +596,11 @@
         }
 
         async function verificarSessao() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
+            const { data: { session } } = await supabase.auth.getSession();
             if (!session) { gerenciarTelas('login'); return; }
 
             sessionUser = session.user;
-            const { data: perfilData, error: perfilError } = await supabaseClient
+            const { data: perfilData, error: perfilError } = await supabase
                 .from('perfis').select('*').eq('id', sessionUser.id).single();
 
             if (perfilError || !perfilData) { gerenciarTelas('login'); return; }
@@ -683,7 +683,7 @@
             const btn = document.getElementById('btn-carregar-alvo');
             btn.disabled = true; btn.innerHTML = '<span class="spinner-dark"></span>';
 
-            const { data, error } = await supabaseClient
+            const { data, error } = await supabase
                 .from('perfis').select('*').eq('matricula', mat).single();
 
             btn.disabled = false; btn.textContent = 'Carregar';
@@ -719,7 +719,7 @@
             const executar = async () => {
                 const btn = document.getElementById('btn-salvar-master');
                 btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvando...';
-                const { error } = await supabaseClient
+                const { error } = await supabase
                     .from('perfis')
                     .update({ nome: nNome, matricula: nMatricula, carga_horaria: nHoras, role: nRole })
                     .eq('id', idUsuarioAlvoMaster);
@@ -747,7 +747,7 @@
             const btn = document.getElementById('btn-salvar-perfil');
             btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvando...';
 
-            const { error } = await supabaseClient
+            const { error } = await supabase
                 .from('perfis')
                 .update({ nome: nNome, matricula: nMatricula })
                 .eq('id', sessionUser.id);
@@ -823,10 +823,10 @@
             document.getElementById('btn-entrar-texto').innerHTML = '<span class="spinner"></span> Entrando...';
 
             try {
-                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+                const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password: senha });
                 if (authError) return mostrarErroAuth('E-mail ou senha incorretos.');
 
-                const { data: perfilData, error: perfilError } = await supabaseClient
+                const { data: perfilData, error: perfilError } = await supabase
                     .from('perfis').select('*').eq('id', authData.user.id).single();
 
                 if (perfilError || !perfilData) return mostrarErroAuth('Erro ao carregar perfil.');
@@ -848,7 +848,7 @@
             if (!email) return;
             if (!validarEmail(email)) { mostrarErroAuth('Informe um e-mail válido para redefinir a senha.'); return; }
 
-            const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
                 redirectTo: window.location.href
             });
 
@@ -879,7 +879,7 @@
 
             // Correção: usa os dados reais do formulário (o código anterior tinha
             // e-mail/senha fixos e nomes de variáveis incorretos).
-            const { data: signUpData, error: signUpError } = await supabaseClient.auth.signUp({
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
                 email: email,
                 password: senha,
                 options: { data: { nome: nome, matricula: matricula } }
@@ -899,7 +899,7 @@
 
             const novoUserId = signUpData.user.id;
 
-            const { error: perfilError } = await supabaseClient.from('perfis').insert([{
+            const { error: perfilError } = await supabase.from('perfis').insert([{
                 id: novoUserId,
                 nome: nome,
                 matricula: matricula,
@@ -923,7 +923,7 @@
 
         async function deslogar() {
             if (streamAtivo) streamAtivo.getTracks().forEach(track => track.stop());
-            await supabaseClient.auth.signOut();
+            await supabase.auth.signOut();
             location.reload();
         }
 
@@ -995,7 +995,7 @@
         async function checarStatusDoDia() {
             if (!sessionPerfis) return;
             const dataSelecionada = document.getElementById('hist-data').value || new Date().toISOString().split('T')[0];
-            const { data } = await supabaseClient
+            const { data } = await supabase
                 .from('registros_ponto')
                 .select('*')
                 .eq('matricula', sessionPerfis.matricula)
@@ -1115,11 +1115,11 @@
 
             try {
                 const nArquivo = `ponto_${sessionPerfis.matricula}_${Date.now()}.png`;
-                const { error: uploadError } = await supabaseClient.storage.from('fotos_ponto').upload(nArquivo, blob);
+                const { error: uploadError } = await supabase.storage.from('fotos_ponto').upload(nArquivo, blob);
                 if (uploadError) { toast('Erro no upload da foto: ' + uploadError.message, 'err'); return; }
 
-                const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
-                const { error: dbError } = await supabaseClient.from('registros_ponto').insert([{
+                const { data: pUrl } = supabase.storage.from('fotos_ponto').getPublicUrl(nArquivo);
+                const { error: dbError } = await supabase.from('registros_ponto').insert([{
                     matricula: sessionPerfis.matricula, tipo_batida: tipo, foto_url: pUrl.publicUrl, latitude: coordsGps.lat, longitude: coordsGps.lng
                 }]);
 
@@ -1143,7 +1143,7 @@
             const btn = document.getElementById('btn-enviar-ajuste'); btn.disabled = true;
             document.getElementById('btn-enviar-ajuste-texto').innerHTML = '<span class="spinner"></span> Enviando...';
 
-            const { error } = await supabaseClient.from('solicitacoes_ponto').insert([{
+            const { error } = await supabase.from('solicitacoes_ponto').insert([{
                 usuario_id: sessionUser.id, matricula: sessionPerfis.matricula, nome_estagiario: sessionPerfis.nome, data_ponto: data, tipo_batida: tipo, horario_sugerido: hora, motivo: motivo, status: 'pendente'
             }]);
 
@@ -1161,7 +1161,7 @@
             const container = document.getElementById('minhas-solicitacoes-container');
             container.innerHTML = `<p class="text-center py-3 text-xs text-gray-400"><span class="spinner-dark"></span></p>`;
 
-            const { data, error } = await supabaseClient
+            const { data, error } = await supabase
                 .from('solicitacoes_ponto').select('*').eq('usuario_id', sessionUser.id)
                 .order('id', { ascending: false }).limit(10);
 
@@ -1193,7 +1193,7 @@
         }
 
         async function carregarPerfisMap() {
-            const { data } = await supabaseClient.from('perfis').select('matricula, nome');
+            const { data } = await supabase.from('perfis').select('matricula, nome');
             perfisMap = {};
             (data || []).forEach(p => { perfisMap[p.matricula] = p.nome; });
         }
@@ -1226,7 +1226,7 @@
                 }
             }
 
-            let query = supabaseClient.from('registros_ponto').select('*').order('created_at', { ascending: ordemAsc });
+            let query = supabase.from('registros_ponto').select('*').order('created_at', { ascending: ordemAsc });
 
             if (matriculasFiltro) query = query.in('matricula', matriculasFiltro);
 
@@ -1301,7 +1301,7 @@
         async function abonarRegistro(id, estadoAtual) {
             if (estadoAtual) {
                 confirmarAcao('Remover o abono deste registro?', async () => {
-                    const { error } = await supabaseClient.from('registros_ponto').update({ abonado: false, justificativa_abono: null }).eq('id', id);
+                    const { error } = await supabase.from('registros_ponto').update({ abonado: false, justificativa_abono: null }).eq('id', id);
                     if (error) { toast('Erro: ' + error.message, 'err'); return; }
                     toast('Abono removido.', 'ok');
                     carregarDadosPainelAdmin();
@@ -1310,7 +1310,7 @@
             }
             const justificativa = prompt("Insira a justificativa legal do abono:");
             if (!justificativa) return;
-            const { error } = await supabaseClient.from('registros_ponto').update({ abonado: true, justificativa_abono: justificativa }).eq('id', id);
+            const { error } = await supabase.from('registros_ponto').update({ abonado: true, justificativa_abono: justificativa }).eq('id', id);
             if (error) { toast('Erro: ' + error.message, 'err'); return; }
             toast('Registro abonado.', 'ok');
             carregarDadosPainelAdmin();
@@ -1337,7 +1337,7 @@
             const btn = document.getElementById('btn-salvar-edicao-horario');
             btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
 
-            const { error } = await supabaseClient
+            const { error } = await supabase
                 .from('registros_ponto')
                 .update({ created_at: dataCompleta })
                 .eq('id', id);
@@ -1355,7 +1355,7 @@
 
         function excluirPonto(id) {
             confirmarAcao('Tem certeza que deseja excluir este registro de ponto? Esta ação não pode ser desfeita.', async () => {
-                const { error } = await supabaseClient.from('registros_ponto').delete().eq('id', id);
+                const { error } = await supabase.from('registros_ponto').delete().eq('id', id);
                 if (error) { toast('Erro: ' + error.message, 'err'); return; }
                 toast('Registro excluído!', 'ok');
                 carregarDadosPainelAdmin();
@@ -1369,7 +1369,7 @@
             const container = document.getElementById('admin-solicitacoes-container');
             container.innerHTML = `<p class="text-center py-4 text-xs text-gray-400"><span class="spinner-dark"></span></p>`;
 
-            const { data: solicitacoes, error: solErr } = await supabaseClient.from('solicitacoes_ponto').select('*').eq('status', 'pendente').order('id', { ascending: false });
+            const { data: solicitacoes, error: solErr } = await supabase.from('solicitacoes_ponto').select('*').eq('status', 'pendente').order('id', { ascending: false });
 
             if (solErr) {
                 container.innerHTML = `<p class="text-center py-4 text-xs text-red-500">Erro ao buscar pendências.</p>`;
@@ -1423,12 +1423,12 @@
                 const [ano, mes, dia] = s.data_ponto.split('-');
                 const [h, m] = s.horario_sugerido.split(':');
                 const dataMontada = new Date(ano, mes - 1, dia, h, m, 0);
-                const { error: insErr } = await supabaseClient.from('registros_ponto').insert([{
+                const { error: insErr } = await supabase.from('registros_ponto').insert([{
                     matricula: s.matricula, tipo_batida: `${s.tipo_batida} (Ajuste)`, created_at: dataMontada.toISOString(), foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
                 }]);
                 if (insErr) { toast('Erro ao salvar: ' + insErr.message, 'err'); return; }
             }
-            const { error: updErr } = await supabaseClient.from('solicitacoes_ponto').update({ status }).eq('id', id);
+            const { error: updErr } = await supabase.from('solicitacoes_ponto').update({ status }).eq('id', id);
             if (updErr) { toast('Erro: ' + updErr.message, 'err'); return; }
             toast(status === 'aprovado' ? 'Solicitação aprovada!' : 'Solicitação rejeitada.', 'ok');
             carregarDadosPainelAdmin();
@@ -1446,7 +1446,7 @@
                 if (matriculasFiltro.length === 0) matriculasFiltro.push(termoBusca);
             }
 
-            let query = supabaseClient.from('registros_ponto').select('matricula, tipo_batida, created_at, abonado, justificativa_abono').order('created_at', { ascending: false });
+            let query = supabase.from('registros_ponto').select('matricula, tipo_batida, created_at, abonado, justificativa_abono').order('created_at', { ascending: false });
             if (matriculasFiltro) query = query.in('matricula', matriculasFiltro);
 
             const { data, error } = await query;
