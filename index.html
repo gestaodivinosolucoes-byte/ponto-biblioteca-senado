@@ -5,16 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Ponto Integrado — Biblioteca do Senado</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Fontes: Fraunces (display institucional) + Inter (texto) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Supabase CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+   
 
     <style>
         :root{
@@ -508,16 +499,25 @@
     </footer>
 
     <script>
-        const SUPABASE_URL = 'sb_publishable_503cQ1xQfSlz0VOe3CNhoA_BJXpzgKB';
+        <script>
+    // 1. Defina suas chaves aqui no topo
+    const SUPABASE_URL = 'https://vsncncitcuxkkajglmlp.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_503cQ1xQfSlz0VOe3CNhoA_BJXpzgKB'; // <--- VOCÊ PRECISA DEFINIR ESSA VARIÁVEL!
 
-        // Correção: evitar sobrescrever o objeto global "supabase" com o cliente.
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // 2. Inicialize o cliente corretamente
+    // Se você carregou o script do Supabase, o objeto global é 'supabase'
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Coordenadas de referência (Senado Federal, Praça dos Três Poderes - Brasília/DF)
-        const LOCAL_REFERENCIA = { lat: -15.799837, lng: -47.864203 };
-        const DISTANCIA_MAX_M = 800; // apenas informativo, não bloqueia o registro
+    // 3. Agora, use 'supabase' em todo o resto do seu código, incluindo a linha 882
+    // Se na linha 882 você estiver usando 'supabaseClient', mude para 'supabase'
+    
+    const LOCAL_REFERENCIA = { lat: -15.799837, lng: -47.864203 };
+    const DISTANCIA_MAX_M = 800;
 
-        let sessionUser = null;
+    let sessionUser = null;
+    
+    // ... restante do seu código
+</script>
         let sessionPerfis = null;
         let streamAtivo = null;
         let coordsGps = { lat: null, lng: null };
