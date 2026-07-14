@@ -504,6 +504,20 @@
     const SUPABASE_URL = 'https://vsncncitcuxkkajglmlp.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_503cQ1xQfSlz0VOe3CNhoA_BJXpzgKB'; // <--- VOCÊ PRECISA DEFINIR ESSA VARIÁVEL!
 
+        async function fazerLogin(email, password) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+      
+        if (error) {
+            console.error("Erro no login:", error.message);
+            return;
+        }
+      
+        console.log("Login com sucesso!");
+    }
+
     // 2. Inicialize o cliente corretamente
     // Se você carregou o script do Supabase, o objeto global é 'supabase'
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
