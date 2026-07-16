@@ -5,7 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Ponto Integrado — Biblioteca do Senado</title>
 
-   
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Fontes: Fraunces (display institucional) + Inter (texto) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root{
@@ -17,17 +26,15 @@
             --ink:         #1B2430;
             --ink-muted:   #5B6472;
             --ok:          #1F7A54;
-            --ok-soft:     #E3F3EC;
             --warn:        #B8862F;
-            --warn-soft:   #FBF1E0;
             --danger:      #B23A32;
-            --danger-soft: #FBEAE8;
         }
         *{ font-family: 'Inter', system-ui, sans-serif; }
         .font-display{ font-family: 'Fraunces', serif; }
         body{ background: var(--paper); }
         .tabular-nums{ font-variant-numeric: tabular-nums; }
 
+        /* Selo/carimbo institucional usado como assinatura visual */
         .seal{
             width: 44px; height: 44px; border-radius: 9999px;
             background: radial-gradient(circle at 35% 30%, var(--brass-soft), var(--brass) 70%);
@@ -35,76 +42,38 @@
             box-shadow: 0 0 0 3px rgba(169,130,47,.18), inset 0 1px 2px rgba(255,255,255,.5);
             color: var(--navy); font-family:'Fraunces',serif; font-weight:700; font-size:15px;
         }
-        .btn-primary{ background: var(--navy); color:#fff; transition: all .18s ease; }
+        .btn-primary{
+            background: var(--navy); color:#fff; transition: all .18s ease;
+        }
         .btn-primary:hover:not(:disabled){ background: var(--navy-soft); }
         .btn-primary:disabled{ opacity:.45; cursor:not-allowed; }
 
-        .btn-brass{ background: var(--brass); color:#fff; transition: all .18s ease; }
+        .btn-brass{ background: var(--brass); color:#fff; }
         .btn-brass:hover:not(:disabled){ filter:brightness(1.06); }
-        .btn-brass:disabled{ opacity:.45; cursor:not-allowed; }
-
-        .btn-ghost{ background:#F0EEE6; color:var(--ink); transition: all .18s ease; }
-        .btn-ghost:hover:not(:disabled){ background:#E7E4DA; }
 
         .point-btn:disabled{ opacity:.4; cursor:not-allowed; filter:grayscale(.3); }
 
-        .fade-in{ animation: fadeIn .22s ease both; }
+        .fade-in{ animation: fadeIn .25s ease both; }
         @keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
-
-        .pop-in{ animation: popIn .18s ease both; }
-        @keyframes popIn{ from{opacity:0; transform: scale(.96);} to{opacity:1; transform: scale(1);} }
 
         .spinner{
             width:16px; height:16px; border-radius:9999px;
             border: 2px solid rgba(255,255,255,.35); border-top-color:#fff;
             animation: spin .7s linear infinite; display:inline-block;
         }
-        .spinner-dark{
-            width:16px; height:16px; border-radius:9999px;
-            border: 2px solid rgba(16,32,58,.15); border-top-color: var(--navy);
-            animation: spin .7s linear infinite; display:inline-block;
-        }
         @keyframes spin{ to{ transform: rotate(360deg); } }
 
-        input:focus, select:focus{ outline:none; box-shadow: 0 0 0 3px rgba(16,32,58,.12); border-color: var(--navy) !important; }
-
-        /* Toasts */
-        #toast-stack{ position:fixed; bottom:16px; right:16px; z-index:200; display:flex; flex-direction:column; gap:8px; max-width: 92vw; }
-        .toast{
-            min-width:220px; max-width:340px; padding:10px 14px; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.16);
-            font-size:12px; font-weight:700; display:flex; align-items:flex-start; gap:8px; color:#fff;
-        }
-        .toast i{ margin-top:1px; }
-        .toast.ok{ background: var(--ok); }
-        .toast.err{ background: var(--danger); }
-        .toast.info{ background: var(--navy); }
-        .toast.warn{ background: var(--warn); }
-
-        .skeleton-row td{ padding:12px; }
-        .skeleton-bar{ height:10px; border-radius:6px; background:linear-gradient(90deg,#EDEAE0,#F6F5F1,#EDEAE0); background-size:200% 100%; animation:shimmer 1.3s ease infinite; }
-        @keyframes shimmer{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
-
-        .admin-card{ display:none; }
-        @media (max-width: 767px){
-            .admin-table-wrap table thead{ display:none; }
-            .admin-table-wrap table, .admin-table-wrap tbody, .admin-table-wrap tr, .admin-table-wrap td{ display:block; width:100%; }
-            .admin-table-wrap tr{ padding:10px 4px; }
-        }
+        input:focus{ outline:none; box-shadow: 0 0 0 3px rgba(16,32,58,.12); border-color: var(--navy) !important; }
 
         @media (prefers-reduced-motion: reduce){
-            .fade-in, .spinner, .spinner-dark, .pop-in, .skeleton-bar{ animation: none !important; }
-        }
-
-        @media print{
-            header, footer, #btn-config, #btn-logout, .no-print{ display:none !important; }
-            body{ background:#fff; }
+            .fade-in, .spinner{ animation: none !important; }
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between" style="color:var(--ink)">
 
     <!-- Cabeçalho Global -->
-    <header class="bg-white border-b py-4 px-6 sticky top-0 z-50 shadow-sm no-print" style="border-color:#E7E4DA">
+    <header class="bg-white border-b py-4 px-6 sticky top-0 z-50 shadow-sm" style="border-color:#E7E4DA">
         <div class="max-w-5xl mx-auto flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="seal">BS</div>
@@ -118,80 +87,40 @@
                     <div id="live-clock" class="text-lg font-black tabular-nums font-display" style="color:var(--navy)">00:00:00</div>
                     <div id="current-date" class="text-xs font-bold" style="color:var(--ink-muted)">--/--/----</div>
                 </div>
-                <button id="btn-config" onclick="abrirModalConfiguracoes()" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold transition bg-slate-100 text-slate-700 hover:bg-slate-200">
-                    <i class="fa-solid fa-gear"></i> <span class="hidden sm:inline">Configurações</span>
-                </button>
                 <button id="btn-logout" onclick="deslogar()" class="hidden px-3 py-1.5 rounded-lg text-xs font-bold transition" style="background:#FBEAE8; color:var(--danger)">
-                    <i class="fa-solid fa-right-from-bracket"></i> <span class="hidden sm:inline">Sair</span>
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- 1. TELA DE ACESSO (LOGIN / CADASTRO) -->
+    <!-- 1. TELA DE LOGIN -->
     <section id="view-login" class="flex-1 flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-2xl border shadow-xl w-full max-w-sm" style="border-color:#E7E4DA">
-
-            <div class="flex border-b mb-6" style="border-color:#E7E4DA">
-                <button id="tab-login" onclick="alternarAbaAuth('login')" class="flex-1 pb-2 text-sm font-bold border-b-2 text-center transition" style="border-color:var(--navy); color:var(--navy)">
-                    Entrar
-                </button>
-                <button id="tab-cadastro" onclick="alternarAbaAuth('cadastro')" class="flex-1 pb-2 text-sm font-medium border-b-2 text-center transition" style="border-color:transparent; color:var(--ink-muted)">
-                    Cadastrar Novo
-                </button>
+            <div class="text-center mb-6">
+                <div class="seal mx-auto mb-3">BS</div>
+                <h2 class="text-xl font-black font-display tracking-tight" style="color:var(--navy)">Acessar o Sistema</h2>
+                <p class="text-xs mt-1" style="color:var(--ink-muted)">Utilize suas credenciais institucionais</p>
             </div>
 
-            <div id="auth-erro" class="hidden mb-4 text-xs font-semibold px-3 py-2 rounded-lg fade-in" style="background:#FBEAE8; color:var(--danger)"></div>
-            <div id="auth-sucesso" class="hidden mb-4 text-xs font-semibold px-3 py-2 rounded-lg fade-in" style="background:#E3F3EC; color:var(--ok)"></div>
+            <div id="login-erro" class="hidden mb-4 text-xs font-semibold px-3 py-2 rounded-lg fade-in" style="background:#FBEAE8; color:var(--danger)"></div>
 
-            <!-- FORMULÁRIO DE LOGIN -->
-            <div id="form-login" class="space-y-4">
+            <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">E-mail</label>
                     <input type="email" id="login-email" autocomplete="username" class="w-full px-3 py-2 border rounded-xl text-sm" style="border-color:#DCD8CC" placeholder="nome@senado.leg.br">
                 </div>
                 <div>
-                    <div class="flex items-center justify-between mb-1">
-                        <label class="block text-xs font-bold" style="color:var(--ink-muted)">Senha</label>
-                        <button type="button" onclick="solicitarRedefinicaoSenha()" class="text-[11px] font-bold hover:underline" style="color:var(--navy)">Esqueci minha senha</button>
-                    </div>
+                    <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Senha</label>
                     <div class="relative">
                         <input type="password" id="login-senha" autocomplete="current-password" class="w-full px-3 py-2 pr-10 border rounded-xl text-sm" style="border-color:#DCD8CC" placeholder="••••••••">
-                        <button type="button" onclick="alternarVisibilidadeSenha('login-senha', 'icone-olho-login')" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ink-muted)">
-                            <i id="icone-olho-login" class="fa-solid fa-eye"></i>
+                        <button type="button" onclick="alternarVisibilidadeSenha()" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ink-muted)">
+                            <i id="icone-olho" class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                 </div>
                 <button id="btn-entrar" onclick="autenticar()" class="w-full py-2.5 btn-primary font-bold text-sm rounded-xl transition shadow-lg active:scale-[0.98] flex items-center justify-center gap-2">
                     <span id="btn-entrar-texto">Entrar no Painel</span>
-                </button>
-            </div>
-
-            <!-- FORMULÁRIO DE CADASTRO -->
-            <div id="form-cadastro" class="hidden space-y-4">
-                <div>
-                    <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Nome Completo</label>
-                    <input type="text" id="cad-nome" class="w-full px-3 py-2 border rounded-xl text-sm" style="border-color:#DCD8CC" placeholder="Nome do Estagiário">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Matrícula</label>
-                    <input type="text" id="cad-matricula" class="w-full px-3 py-2 border rounded-xl text-sm" style="border-color:#DCD8CC" placeholder="Ex: 8740880">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">E-mail Institucional</label>
-                    <input type="email" id="cad-email" class="w-full px-3 py-2 border rounded-xl text-sm" style="border-color:#DCD8CC" placeholder="nome@senado.leg.br">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Senha de Acesso</label>
-                    <div class="relative">
-                        <input type="password" id="cad-senha" class="w-full px-3 py-2 pr-10 border rounded-xl text-sm" style="border-color:#DCD8CC" placeholder="Mínimo 6 caracteres">
-                        <button type="button" onclick="alternarVisibilidadeSenha('cad-senha', 'icone-olho-cad')" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs" style="color:var(--ink-muted)">
-                            <i id="icone-olho-cad" class="fa-solid fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-                <button id="btn-cadastrar" onclick="cadastrarEstagiario()" class="w-full py-2.5 btn-brass font-bold text-sm rounded-xl transition shadow-lg active:scale-[0.98] flex items-center justify-center gap-2">
-                    <span id="btn-cadastrar-texto">Criar Minha Conta</span>
                 </button>
             </div>
         </div>
@@ -211,24 +140,10 @@
         </div>
 
         <!-- Câmera e GPS -->
-        <div class="bg-white rounded-2xl border p-4 shadow-sm flex flex-col items-center space-y-3" style="border-color:#E7E4DA">
+        <div class="bg-white rounded-2xl border p-4 shadow-sm flex flex-col items-center" style="border-color:#E7E4DA">
             <div class="relative w-full aspect-video bg-slate-900 rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
                 <video id="webcam" autoplay playsinline muted class="w-full h-full object-cover"></video>
-                <canvas id="photo-capture" class="hidden w-full h-full object-cover absolute inset-0"></canvas>
-                <div id="camera-offline" class="hidden absolute inset-0 flex flex-col items-center justify-center gap-2 text-white/70 text-xs font-bold">
-                    <i class="fa-solid fa-video-slash text-lg"></i> Câmera indisponível
-                </div>
-            </div>
-
-            <!-- Prévia da foto antes de confirmar a batida -->
-            <div id="preview-acoes" class="hidden w-full items-center justify-between gap-2 pop-in" style="display:flex">
-                <div class="text-xs font-bold" style="color:var(--ink)">
-                    Confirmar batida: <span id="preview-tipo-label" class="px-2 py-0.5 rounded-full text-white" style="background:var(--navy)">--</span>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="repetirFoto()" class="px-3 py-1.5 rounded-lg text-xs font-bold btn-ghost"><i class="fa-solid fa-rotate-left"></i> Repetir</button>
-                    <button id="btn-confirmar-envio" onclick="confirmarEnvioPonto()" class="px-3 py-1.5 rounded-lg text-xs font-bold btn-primary"><i class="fa-solid fa-check"></i> Confirmar</button>
-                </div>
+                <canvas id="photo-capture" class="hidden"></canvas>
             </div>
         </div>
 
@@ -243,20 +158,13 @@
             <span id="badge-geo" class="text-xs bg-slate-100 px-2.5 py-0.5 rounded-full font-bold" style="color:var(--ink-muted)">Aguardando</span>
         </div>
 
-        <!-- Histórico com seletor de data -->
+        <!-- Histórico Individual -->
         <div class="bg-white rounded-2xl border p-4 shadow-sm" style="border-color:#E7E4DA">
-            <div class="flex items-center justify-between mb-3 pb-2 border-b gap-2 flex-wrap" style="border-color:#F0EEE6">
-                <span class="text-xs font-bold uppercase tracking-wider" style="color:var(--ink)">Batidas</span>
-                <div class="flex items-center gap-2">
-                    <input type="date" id="hist-data" class="px-2 py-1 border rounded-lg text-[11px]" style="border-color:#DCD8CC" onchange="checarStatusDoDia()">
-                    <span id="total-horas-dia" class="text-xs text-white px-2.5 py-0.5 rounded-full font-black whitespace-nowrap" style="background:var(--navy)">Total: 0h00m / 4h</span>
-                </div>
+            <div class="flex items-center justify-between mb-3 pb-2 border-b" style="border-color:#F0EEE6">
+                <span class="text-xs font-bold uppercase tracking-wider" style="color:var(--ink)">Batidas de Hoje</span>
+                <span id="total-horas-dia" class="text-xs text-white px-2.5 py-0.5 rounded-full font-black" style="background:var(--navy)">Total: 0h00m / 6h</span>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <tbody id="historico-container" class="divide-y"></tbody>
-                </table>
-            </div>
+            <div id="historico-container" class="space-y-2"></div>
         </div>
 
         <!-- Painel de Botões de Ação -->
@@ -273,7 +181,7 @@
                 <div class="flex items-center space-x-3"><div class="font-bold text-lg" style="color:#0E7C8C"><i class="fa-solid fa-briefcase"></i></div><div class="text-left"><p class="text-sm font-bold" style="color:var(--ink)">Retorno Intervalo</p></div></div>
                 <div id="status-retorno-pausa" class="text-xs italic" style="color:var(--ink-muted)">Não registrado</div>
             </button>
-            <button id="btn-saida" disabled class="point-btn w-full bg-white border p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]" style="border-color:#E7E4DA" onclick="registrarPonto('Saida_Final')">
+            <button id="btn-saida" disabled class="point-btn w-full bg-white border p-4 rounded-xl shadow-sm flex items-center justify-between transition active:scale-[0.99]" style="border-color:#E7E4DA" onclick="registrarPonto('Saída')">
                 <div class="flex items-center space-x-3"><div class="font-bold text-lg" style="color:var(--danger)"><i class="fa-solid fa-right-from-bracket"></i></div><div class="text-left"><p class="text-sm font-bold" style="color:var(--ink)">Saída Final</p></div></div>
                 <div id="status-saida" class="text-xs italic" style="color:var(--ink-muted)">Não registrado</div>
             </button>
@@ -288,25 +196,14 @@
                     <option value="Entrada">Entrada</option>
                     <option value="Saída Pausa">Saída Intervalo</option>
                     <option value="Retorno Pausa">Retorno Intervalo</option>
-                    <option value="Saída Final">Saída Final</option>
+                    <option value="Saída">Saída Final</option>
                 </select>
             </div>
             <div class="grid grid-cols-3 gap-2 items-center">
                 <input type="time" id="adj-hora" class="col-span-1 p-2 bg-white rounded-lg text-xs border" style="border-color:#DCD8CC">
                 <input type="text" id="adj-motivo" placeholder="Motivo/Justificativa" class="col-span-2 p-2 bg-white rounded-lg text-xs border" style="border-color:#DCD8CC">
             </div>
-            <button id="btn-enviar-ajuste" onclick="enviarSolicitacaoAjuste()" class="w-full py-1.5 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2" style="background:var(--navy)">
-                <span id="btn-enviar-ajuste-texto">Enviar Pedido ao Admin</span>
-            </button>
-        </div>
-
-        <!-- Minhas Solicitações -->
-        <div class="bg-white rounded-2xl border p-4 shadow-sm" style="border-color:#E7E4DA">
-            <div class="flex items-center justify-between mb-3 pb-2 border-b" style="border-color:#F0EEE6">
-                <span class="text-xs font-bold uppercase tracking-wider" style="color:var(--ink)">Minhas Solicitações</span>
-                <button onclick="carregarMinhasSolicitacoes()" class="text-[11px] font-bold" style="color:var(--navy)"><i class="fa-solid fa-arrows-rotate"></i></button>
-            </div>
-            <div id="minhas-solicitacoes-container" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+            <button id="btn-enviar-ajuste" onclick="enviarSolicitacaoAjuste()" class="w-full py-1.5 text-white rounded-lg text-xs font-bold transition" style="background:var(--navy)">Enviar Pedido ao Admin</button>
         </div>
     </section>
 
@@ -318,41 +215,26 @@
                 <h2 class="text-2xl font-black font-display mt-1">Painel do Administrador</h2>
                 <p class="text-xs" style="color:#C9D3E2">Monitore batidas, valide correções eletrônicas e emita relatórios regulamentares</p>
             </div>
-            <div class="flex gap-2 no-print">
-                <button onclick="imprimirFolha()" class="btn-ghost px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition shadow-lg">
-                    <i class="fa-solid fa-print"></i> Imprimir
-                </button>
-                <button onclick="baixarFolhaPonto()" class="btn-brass px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition shadow-lg">
-                    <i class="fa-solid fa-file-arrow-down"></i> Exportar (.CSV)
-                </button>
-            </div>
+            <button onclick="baixarFolhaPonto()" class="btn-brass px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition shadow-lg">
+                <i class="fa-solid fa-file-arrow-down"></i> Exportar Folha de Ponto (.CSV)
+            </button>
         </div>
 
-        <div class="bg-white p-4 rounded-xl border shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4 no-print" style="border-color:#E7E4DA">
+        <div class="bg-white p-4 rounded-xl border shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-4" style="border-color:#E7E4DA">
             <div>
-                <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Buscar por Nome ou Matrícula</label>
-                <input type="text" id="filtro-matricula" placeholder="Ex: 8740880 ou parte do nome" class="w-full px-3 py-1.5 border rounded-xl text-xs" style="border-color:#DCD8CC">
+                <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Filtrar por Matrícula do Estagiário</label>
+                <input type="text" id="filtro-matricula" oninput="carregarDadosPainelAdmin()" placeholder="Ex: E-2026 (Deixe vazio para ver todos)" class="w-full px-3 py-1.5 border rounded-xl text-xs" style="border-color:#DCD8CC">
             </div>
             <div>
                 <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Data Específica</label>
                 <input type="date" id="filtro-data" onchange="carregarDadosPainelAdmin()" class="w-full px-3 py-1.5 border rounded-xl text-xs" style="border-color:#DCD8CC">
             </div>
-            <div>
-                <label class="block text-xs font-bold mb-1" style="color:var(--ink-muted)">Ordenar por</label>
-                <select id="filtro-ordem" onchange="carregarDadosPainelAdmin()" class="w-full px-3 py-1.5 border rounded-xl text-xs" style="border-color:#DCD8CC">
-                    <option value="desc">Mais recentes primeiro</option>
-                    <option value="asc">Mais antigos primeiro</option>
-                </select>
-            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="lg:col-span-2 bg-white rounded-2xl border shadow-sm overflow-hidden" style="border-color:#E7E4DA">
-                <div class="p-4 border-b font-bold text-xs uppercase tracking-wider flex items-center justify-between" style="background:#F6F5F1; border-color:#E7E4DA; color:var(--ink)">
-                    <span>Histórico Geral de Registros</span>
-                    <span id="admin-contagem" class="text-[11px] font-mono text-slate-400 normal-case"></span>
-                </div>
-                <div class="overflow-x-auto admin-table-wrap">
+                <div class="p-4 border-b font-bold text-xs uppercase tracking-wider" style="background:#F6F5F1; border-color:#E7E4DA; color:var(--ink)">Histórico Geral de Registros</div>
+                <div class="overflow-x-auto">
                     <table class="w-full border-collapse text-left text-xs">
                         <thead class="font-bold uppercase border-b" style="background:#F6F5F1; color:var(--ink-muted); border-color:#E7E4DA">
                             <tr>
@@ -365,9 +247,6 @@
                         <tbody id="admin-tabela-ponto" class="divide-y" style="border-color:#F0EEE6"></tbody>
                     </table>
                 </div>
-                <div class="p-3 border-t flex justify-center no-print" style="border-color:#F0EEE6">
-                    <button id="btn-carregar-mais" onclick="carregarMaisRegistros()" class="hidden px-4 py-1.5 rounded-lg text-xs font-bold btn-ghost">Carregar mais registros</button>
-                </div>
             </div>
 
             <div class="bg-white rounded-2xl border shadow-sm p-4 space-y-4" style="border-color:#E7E4DA">
@@ -377,220 +256,53 @@
         </div>
     </section>
 
-    <!-- 4. MODAL DE CONFIGURAÇÕES AVANÇADAS & GESTÃO COMPLETA -->
-    <div id="modal-configuracoes" class="hidden fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border flex flex-col space-y-4 my-8 pop-in" style="border-color:#E7E4DA">
-            <div class="flex justify-between items-center pb-2 border-b">
-                <h3 class="font-display font-bold text-base text-slate-900"><i class="fa-solid fa-user-gear mr-1"></i> Configurações do Perfil</h3>
-                <button onclick="fecharModalConfiguracoes()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <!-- SEÇÃO 1: DADOS DO PRÓPRIO USUÁRIO CONECTADO -->
-            <div class="space-y-3">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-50 p-1.5 rounded"><i class="fa-solid fa-id-badge"></i> Seus Dados Pessoais</h4>
-                <div>
-                    <label class="block text-[11px] font-bold mb-1 text-gray-500">Seu Nome Completo</label>
-                    <input type="text" id="config-nome" class="w-full px-3 py-1.5 border rounded-xl text-xs" style="border-color:#DCD8CC">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold mb-1 text-gray-500">Sua Matrícula</label>
-                    <input type="text" id="config-matricula" class="w-full px-3 py-1.5 border rounded-xl text-xs" style="border-color:#DCD8CC">
-                </div>
-                <button id="btn-salvar-perfil" onclick="salvarDadosPerfil()" class="w-full py-1.5 text-white font-bold text-xs rounded-xl transition" style="background:var(--navy)">Atualizar Meus Dados</button>
-            </div>
-
-            <!-- SEÇÃO 2: SUPER CONTROLE DO ADMIN -->
-            <div id="secao-horas-admin" class="hidden pt-4 border-t space-y-3">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-amber-800 bg-amber-50 p-1.5 rounded"><i class="fa-solid fa-sliders"></i> Master Control: Editar Qualquer Usuário</h4>
-
-                <div>
-                    <label class="block text-[11px] font-bold mb-1 text-amber-900">1. Digite a Matrícula do Alvo</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="config-horas-target-matricula" placeholder="Ex: 16315942" class="flex-1 px-3 py-1.5 border rounded-xl text-xs font-mono" style="border-color:#DCD8CC">
-                        <button id="btn-carregar-alvo" onclick="buscarUsuarioParaEdicao()" class="px-3 py-1.5 text-xs font-bold bg-slate-200 text-slate-800 rounded-xl hover:bg-slate-300 transition">Carregar</button>
-                    </div>
-                </div>
-
-                <div id="campos-edicao-alvo" class="space-y-3 opacity-60 pointer-events-none transition-all duration-200 bg-slate-50/50 p-3 rounded-xl border border-dashed">
-                    <p class="text-[10px] font-bold text-slate-400 italic" id="txt-alvo-status">Nenhum colaborador selecionado acima</p>
-                    <div>
-                        <label class="block text-[11px] font-bold mb-1 text-gray-600">Modificar Nome do Colaborador</label>
-                        <input type="text" id="edit-alvo-nome" class="w-full px-3 py-1.5 bg-white border rounded-xl text-xs" style="border-color:#DCD8CC">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold mb-1 text-gray-600">Modificar Matrícula do Colaborador</label>
-                        <input type="text" id="edit-alvo-matricula" class="w-full px-3 py-1.5 bg-white border rounded-xl text-xs font-mono" style="border-color:#DCD8CC">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold mb-1 text-gray-600">Carga Horária Diária</label>
-                        <select id="config-horas-valor" class="w-full px-3 py-1.5 bg-white border rounded-xl text-xs" style="border-color:#DCD8CC">
-                            <option value="4">4 Horas Diárias (Padrão)</option>
-                            <option value="6">6 Horas Diárias</option>
-                            <option value="8">8 Horas Diárias</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold mb-1 text-gray-600">Nível de Permissão (Role)</label>
-                        <select id="config-role-valor" class="w-full px-3 py-1.5 bg-white border rounded-xl text-xs" style="border-color:#DCD8CC">
-                            <option value="estagiario">Estagiário Comum</option>
-                            <option value="admin">Administrador Geral</option>
-                        </select>
-                    </div>
-                    <button id="btn-salvar-master" onclick="salvarAlteracoesMaster()" class="w-full py-2 text-white bg-amber-700 hover:bg-amber-800 rounded-xl font-bold text-xs transition shadow-md">Salvar Alterações Master</button>
-                </div>
-            </div>
-
-            <div class="pt-2 flex justify-end">
-                <button onclick="fecharModalConfiguracoes()" class="px-4 py-2 rounded-xl text-xs font-medium bg-gray-100 text-gray-600">Fechar Janela</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Edição de Horário -->
-    <div id="modal-edicao-horario" class="hidden fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 border border-gray-100 pop-in">
-            <h3 class="font-bold text-base mb-4 text-slate-800"><i class="fa-solid fa-clock-rotate-left mr-2"></i> Editar Registro</h3>
-            <input type="hidden" id="edit-ponto-id">
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-500 mb-1">Nova Data</label>
-                    <input type="date" id="edit-data-input" class="w-full px-3 py-2 border rounded-xl text-sm">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-500 mb-1">Novo Horário</label>
-                    <input type="time" id="edit-hora-input" class="w-full px-3 py-2 border rounded-xl text-sm">
-                </div>
-            </div>
-
-            <div class="flex gap-3 mt-6">
-                <button onclick="document.getElementById('modal-edicao-horario').classList.add('hidden')"
-                        style="background-color: #E5E7EB; color: #374151; padding: 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; flex: 1;">
-                    Cancelar
-                </button>
-                <button id="btn-salvar-edicao-horario" onclick="confirmarEdicaoPonto()"
-                        style="background-color: #10203A; color: #FFFFFF; padding: 10px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; flex: 1;">
-                    Salvar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Confirmação Genérico -->
-    <div id="modal-confirmacao" class="hidden fixed inset-0 bg-black/50 z-[120] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 border border-gray-100 pop-in">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="w-9 h-9 rounded-full flex items-center justify-center text-white" style="background:var(--danger)"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <h3 id="confirmacao-titulo" class="font-bold text-sm text-slate-800">Confirmar ação</h3>
-            </div>
-            <p id="confirmacao-mensagem" class="text-xs text-slate-500 mb-5">Tem certeza?</p>
-            <div class="flex gap-3">
-                <button onclick="fecharModalConfirmacao()" class="flex-1 py-2 rounded-xl text-xs font-bold btn-ghost">Cancelar</button>
-                <button id="confirmacao-btn-ok" class="flex-1 py-2 rounded-xl text-xs font-bold text-white" style="background:var(--danger)">Confirmar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toasts -->
-    <div id="toast-stack" class="no-print"></div>
-
-    <footer class="text-center py-4 text-[10px] font-bold border-t mt-6 no-print" style="color:var(--ink-muted); background:#EFEDE4; border-color:#E7E4DA">
+    <footer class="text-center py-4 text-[10px] font-bold border-t mt-6" style="color:var(--ink-muted); background:#EFEDE4; border-color:#E7E4DA">
         Sistema Criptografado &bull; Biblioteca do Senado Federal
     </footer>
 
     <script>
-        <script>
-    // 1. Defina suas chaves aqui no topo
-    const SUPABASE_URL = 'https://vsncncitcuxkkajglmlp.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_503cQ1xQfSlz0VOe3CNhoA_BJXpzgKB'; // <--- VOCÊ PRECISA DEFINIR ESSA VARIÁVEL!
+        // ==========================================================================
+        // CONFIGURAÇÃO DO SUPABASE
+        // Substitua pela sua URL e chave ANON reais (Project Settings > API).
+        // Nunca coloque a service_role key aqui — apenas a anon/public key,
+        // protegida pelas políticas de RLS nas tabelas 'perfis', 'registros_ponto'
+        // e 'solicitacoes_ponto'.
+        // ==========================================================================
+        const SUPABASE_URL = 'https://bkkbyaspzmzgonwxvlcc.supabase.co';
+        const SUPABASE_ANON_KEY = 'SUA_NOVA_CHAVE_AQUI';
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 3. Suas funções e variáveis
-    async function fazerLogin(email, password) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
-      
-        if (error) {
-            console.error("Erro no login:", error.message);
-            return;
-        }
-      
-        console.log("Login com sucesso!");
-    }
-
-    const LOCAL_REFERENCIA = { lat: -15.799837, lng: -47.864203 };
-    const DISTANCIA_MAX_M = 800;
-
-    let sessionUser = null;
-</script>
+        let sessionUser = null;
         let sessionPerfis = null;
         let streamAtivo = null;
         let coordsGps = { lat: null, lng: null };
         let cameraOk = false;
         let gpsOk = false;
-        let idUsuarioAlvoMaster = null;
-        let pendingPunch = null; // { tipo, blob }
-        let registrosCache = {}; // cache de registros por id (para prefill de edição)
-        let perfisMap = {}; // matricula -> nome
-        let adminOffset = 0;
-        const ADMIN_PAGE_SIZE = 25;
-        let filtroDebounceTimer = null;
 
-        // ---------- Toasts ----------
-        function toast(msg, tipo = 'info', duracao = 3500) {
-            const stack = document.getElementById('toast-stack');
-            const icones = { ok: 'fa-circle-check', err: 'fa-circle-exclamation', info: 'fa-circle-info', warn: 'fa-triangle-exclamation' };
-            const el = document.createElement('div');
-            el.className = `toast ${tipo} fade-in`;
-            el.innerHTML = `<i class="fa-solid ${icones[tipo] || icones.info}"></i><span>${escapeHtml(msg)}</span>`;
-            stack.appendChild(el);
-            setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .25s'; setTimeout(() => el.remove(), 250); }, duracao);
-        }
-
-        // ---------- Modal de confirmação genérico ----------
-        function confirmarAcao(mensagem, aoConfirmar, titulo = 'Confirmar ação') {
-            document.getElementById('confirmacao-titulo').textContent = titulo;
-            document.getElementById('confirmacao-mensagem').textContent = mensagem;
-            const btnOk = document.getElementById('confirmacao-btn-ok');
-            const novoBtn = btnOk.cloneNode(true);
-            btnOk.parentNode.replaceChild(novoBtn, btnOk);
-            novoBtn.addEventListener('click', () => { fecharModalConfirmacao(); aoConfirmar(); });
-            document.getElementById('modal-confirmacao').classList.remove('hidden');
-        }
-        function fecharModalConfirmacao() { document.getElementById('modal-confirmacao').classList.add('hidden'); }
-
-        // ---------- Realtime ----------
-        supabase
+        // Realtime: qualquer nova batida inserida atualiza a tela do estagiário logado
+        supabaseClient
             .channel('canal-ponto')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'registros_ponto' }, () => {
-                if (sessionPerfis && sessionPerfis.role !== 'admin') checarStatusDoDia();
+                if (sessionPerfis && !sessionPerfis.role) checarStatusDoDia();
+                else if (sessionPerfis && sessionPerfis.role !== 'admin') checarStatusDoDia();
             })
             .subscribe();
 
+        // --------------------------------------------------------------------
+        // INICIALIZAÇÃO (ponto único de entrada — evita handlers duplicados)
+        // --------------------------------------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             iniciarRelogio();
             verificarSessao();
-            const hoje = new Date().toISOString().split('T')[0];
-            const histData = document.getElementById('hist-data');
-            if (histData) histData.value = hoje;
-            document.getElementById('login-senha').addEventListener('keydown', (e) => { if (e.key === 'Enter') autenticar(); });
 
-            const filtroInput = document.getElementById('filtro-matricula');
-            if (filtroInput) {
-                filtroInput.addEventListener('input', () => {
-                    clearTimeout(filtroDebounceTimer);
-                    filtroDebounceTimer = setTimeout(() => carregarDadosPainelAdmin(), 400);
-                });
-            }
-
-            // Delegação de eventos para tabela admin e solicitações (evita bugs de aspas em onclick)
-            document.getElementById('admin-tabela-ponto').addEventListener('click', onAdminTabelaClick);
-            document.getElementById('admin-solicitacoes-container').addEventListener('click', onSolicitacoesClick);
-
-            window.addEventListener('beforeunload', () => { if (streamAtivo) streamAtivo.getTracks().forEach(t => t.stop()); });
+            // Enter para logar
+            document.getElementById('login-senha').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') autenticar();
+            });
+            document.getElementById('login-email').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') autenticar();
+            });
         });
 
         function iniciarRelogio() {
@@ -603,12 +315,13 @@
             }, 1000);
         }
 
+        // Restaura sessão ativa (ex.: usuário atualizou a página)
         async function verificarSessao() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) { gerenciarTelas('login'); return; }
 
             sessionUser = session.user;
-            const { data: perfilData, error: perfilError } = await supabase
+            const { data: perfilData, error: perfilError } = await supabaseClient
                 .from('perfis').select('*').eq('id', sessionUser.id).single();
 
             if (perfilError || !perfilData) { gerenciarTelas('login'); return; }
@@ -618,7 +331,6 @@
         }
 
         function aplicarPerfilNaTela(perfilData) {
-            document.getElementById('btn-config').classList.remove('hidden');
             if (perfilData.role === 'admin') {
                 gerenciarTelas('admin');
                 return;
@@ -634,851 +346,567 @@
             document.getElementById('view-estagiario').classList.add('hidden');
             document.getElementById('view-admin').classList.add('hidden');
             document.getElementById('btn-logout').classList.add('hidden');
-            document.getElementById('btn-config').classList.add('hidden');
 
             if (telaAtiva === 'login') {
                 document.getElementById('view-login').classList.remove('hidden');
             } else if (telaAtiva === 'estagiario') {
                 document.getElementById('view-estagiario').classList.remove('hidden');
                 document.getElementById('btn-logout').classList.remove('hidden');
-                document.getElementById('btn-config').classList.remove('hidden');
                 inicializarCameraEGPS();
                 checarStatusDoDia();
-                carregarMinhasSolicitacoes();
             } else if (telaAtiva === 'admin') {
                 document.getElementById('view-admin').classList.remove('hidden');
                 document.getElementById('btn-logout').classList.remove('hidden');
-                document.getElementById('btn-config').classList.remove('hidden');
-                if (streamAtivo) { streamAtivo.getTracks().forEach(track => track.stop()); streamAtivo = null; }
-                adminOffset = 0;
+                if (streamAtivo) {
+                    streamAtivo.getTracks().forEach(track => track.stop());
+                    streamAtivo = null;
+                }
                 carregarDadosPainelAdmin();
             }
         }
 
-        // ---------- Configurações / Master Control ----------
-        function abrirModalConfiguracoes() {
-            if (!sessionPerfis) return;
-            document.getElementById('config-nome').value = sessionPerfis.nome || '';
-            document.getElementById('config-matricula').value = sessionPerfis.matricula || '';
-
-            if (sessionPerfis.role === 'admin') {
-                document.getElementById('secao-horas-admin').classList.remove('hidden');
-                resetarCamposMaster();
-            } else {
-                document.getElementById('secao-horas-admin').classList.add('hidden');
-            }
-            document.getElementById('modal-configuracoes').classList.remove('hidden');
-        }
-
-        function fecharModalConfiguracoes() {
-            document.getElementById('modal-configuracoes').classList.add('hidden');
-        }
-
-        function resetarCamposMaster() {
-            idUsuarioAlvoMaster = null;
-            document.getElementById('config-horas-target-matricula').value = '';
-            document.getElementById('edit-alvo-nome').value = '';
-            document.getElementById('edit-alvo-matricula').value = '';
-            const box = document.getElementById('campos-edicao-alvo');
-            box.classList.add('opacity-60', 'pointer-events-none');
-            document.getElementById('txt-alvo-status').textContent = "Nenhum colaborador selecionado acima";
-        }
-
-        async function buscarUsuarioParaEdicao() {
-            const mat = document.getElementById('config-horas-target-matricula').value.trim();
-            if (!mat) { toast('Digite uma matrícula válida.', 'warn'); return; }
-
-            const btn = document.getElementById('btn-carregar-alvo');
-            btn.disabled = true; btn.innerHTML = '<span class="spinner-dark"></span>';
-
-            const { data, error } = await supabase
-                .from('perfis').select('*').eq('matricula', mat).single();
-
-            btn.disabled = false; btn.textContent = 'Carregar';
-
-            if (error || !data) {
-                resetarCamposMaster();
-                toast('Usuário/Estagiário não encontrado com esta matrícula.', 'err');
-                return;
-            }
-
-            idUsuarioAlvoMaster = data.id;
-            document.getElementById('edit-alvo-nome').value = data.nome || '';
-            document.getElementById('edit-alvo-matricula').value = data.matricula || '';
-            document.getElementById('config-horas-valor').value = data.carga_horaria || '4';
-            document.getElementById('config-role-valor').value = data.role || 'estagiario';
-
-            const box = document.getElementById('campos-edicao-alvo');
-            box.classList.remove('opacity-60', 'pointer-events-none');
-            document.getElementById('txt-alvo-status').innerHTML = `<span class="text-emerald-700 font-bold"><i class="fa-solid fa-check"></i> Editando: ${escapeHtml(data.nome)}</span>`;
-        }
-
-        async function salvarAlteracoesMaster() {
-            if (!idUsuarioAlvoMaster) { toast('Nenhum usuário foi carregado para alteração.', 'warn'); return; }
-
-            const nNome = document.getElementById('edit-alvo-nome').value.trim();
-            const nMatricula = document.getElementById('edit-alvo-matricula').value.trim();
-            const nHoras = parseInt(document.getElementById('config-horas-valor').value, 10);
-            const nRole = document.getElementById('config-role-valor').value;
-
-            if (!nNome || !nMatricula) { toast('Nome e Matrícula do alvo não podem ficar em branco.', 'warn'); return; }
-
-            const alterandoProprioAdmin = idUsuarioAlvoMaster === sessionUser.id && nRole !== 'admin';
-            const executar = async () => {
-                const btn = document.getElementById('btn-salvar-master');
-                btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvando...';
-                const { error } = await supabase
-                    .from('perfis')
-                    .update({ nome: nNome, matricula: nMatricula, carga_horaria: nHoras, role: nRole })
-                    .eq('id', idUsuarioAlvoMaster);
-                btn.disabled = false; btn.textContent = 'Salvar Alterações Master';
-
-                if (error) { toast('Erro ao executar atualização Master: ' + error.message, 'err'); return; }
-
-                toast('Credenciais e parâmetros atualizados com sucesso!', 'ok');
-                fecharModalConfiguracoes();
-                if (sessionPerfis.role === 'admin') carregarDadosPainelAdmin();
-            };
-
-            if (alterandoProprioAdmin) {
-                confirmarAcao('Você está removendo seu próprio acesso de Administrador. Isso pode bloquear seu acesso ao painel de gestão. Deseja continuar?', executar, 'Remover seu próprio acesso admin?');
-            } else {
-                executar();
-            }
-        }
-
-        async function salvarDadosPerfil() {
-            const nNome = document.getElementById('config-nome').value.trim();
-            const nMatricula = document.getElementById('config-matricula').value.trim();
-            if (!nNome || !nMatricula) { toast('Os campos não podem ficar vazios.', 'warn'); return; }
-
-            const btn = document.getElementById('btn-salvar-perfil');
-            btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Salvando...';
-
-            const { error } = await supabase
-                .from('perfis')
-                .update({ nome: nNome, matricula: nMatricula })
-                .eq('id', sessionUser.id);
-
-            btn.disabled = false; btn.textContent = 'Atualizar Meus Dados';
-
-            if (error) { toast('Erro ao atualizar seus dados: ' + error.message, 'err'); return; }
-            toast('Seus dados pessoais foram atualizados!', 'ok');
-            setTimeout(() => location.reload(), 900);
-        }
-
-        // ---------- Auth ----------
-        function alternarAbaAuth(aba) {
-            limparMensagensAuth();
-            const tabLogin = document.getElementById('tab-login');
-            const tabCad = document.getElementById('tab-cadastro');
-            const formLogin = document.getElementById('form-login');
-            const formCad = document.getElementById('form-cadastro');
-
-            if (aba === 'login') {
-                tabLogin.className = "flex-1 pb-2 text-sm font-bold border-b-2 text-center transition";
-                tabLogin.style.borderColor = "var(--navy)"; tabLogin.style.color = "var(--navy)";
-                tabCad.className = "flex-1 pb-2 text-sm font-medium border-b-2 text-center transition";
-                tabCad.style.borderColor = "transparent"; tabCad.style.color = "var(--ink-muted)";
-                formLogin.classList.remove('hidden'); formCad.classList.add('hidden');
-            } else {
-                tabCad.className = "flex-1 pb-2 text-sm font-bold border-b-2 text-center transition";
-                tabCad.style.borderColor = "var(--navy)"; tabCad.style.color = "var(--navy)";
-                tabLogin.className = "flex-1 pb-2 text-sm font-medium border-b-2 text-center transition";
-                tabLogin.style.borderColor = "transparent"; tabLogin.style.color = "var(--ink-muted)";
-                formLogin.classList.add('hidden'); formCad.classList.remove('hidden');
-            }
-        }
-
-        function alternarVisibilidadeSenha(idCampo, idIcone) {
-            const campo = document.getElementById(idCampo);
-            const icone = document.getElementById(idIcone);
+        // --------------------------------------------------------------------
+        // LOGIN / LOGOUT
+        // --------------------------------------------------------------------
+        function alternarVisibilidadeSenha() {
+            const campo = document.getElementById('login-senha');
+            const icone = document.getElementById('icone-olho');
             const visivel = campo.type === 'text';
             campo.type = visivel ? 'password' : 'text';
             icone.classList.toggle('fa-eye', visivel);
             icone.classList.toggle('fa-eye-slash', !visivel);
         }
 
-        function mostrarErroAuth(msg) {
-            const el = document.getElementById('auth-erro');
-            el.textContent = msg; el.classList.remove('hidden');
-            document.getElementById('auth-sucesso').classList.add('hidden');
+        function mostrarErroLogin(msg) {
+            const el = document.getElementById('login-erro');
+            el.textContent = msg;
+            el.classList.remove('hidden');
         }
 
-        function mostrarSucessoAuth(msg) {
-            const el = document.getElementById('auth-sucesso');
-            el.textContent = msg; el.classList.remove('hidden');
-            document.getElementById('auth-erro').classList.add('hidden');
+        function limparErroLogin() {
+            document.getElementById('login-erro').classList.add('hidden');
         }
 
-        function limparMensagensAuth() {
-            document.getElementById('auth-erro').classList.add('hidden');
-            document.getElementById('auth-sucesso').classList.add('hidden');
+        function setLoadingLogin(carregando) {
+            const btn = document.getElementById('btn-entrar');
+            const texto = document.getElementById('btn-entrar-texto');
+            btn.disabled = carregando;
+            texto.innerHTML = carregando ? '<span class="spinner"></span> Entrando...' : 'Entrar no Painel';
         }
 
-        function validarEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+        function traduzErroAuth(mensagem) {
+            if (!mensagem) return 'Não foi possível entrar. Tente novamente.';
+            const m = mensagem.toLowerCase();
+            if (m.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
+            if (m.includes('email not confirmed')) return 'E-mail ainda não confirmado. Verifique sua caixa de entrada.';
+            return 'Não foi possível entrar: ' + mensagem;
+        }
 
         async function autenticar() {
-            limparMensagensAuth();
+            limparErroLogin();
+
             const email = document.getElementById('login-email').value.trim();
             const senha = document.getElementById('login-senha').value;
 
-            if (!email || !senha) return mostrarErroAuth('Preencha e-mail e senha.');
-            if (!validarEmail(email)) return mostrarErroAuth('Informe um e-mail válido.');
+            if (!email || !senha) {
+                mostrarErroLogin('Preencha e-mail e senha.');
+                return;
+            }
 
-            const btn = document.getElementById('btn-entrar');
-            btn.disabled = true;
-            document.getElementById('btn-entrar-texto').innerHTML = '<span class="spinner"></span> Entrando...';
-
+            setLoadingLogin(true);
             try {
-                const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password: senha });
-                if (authError) return mostrarErroAuth('E-mail ou senha incorretos.');
+                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                    email, password: senha
+                });
 
-                const { data: perfilData, error: perfilError } = await supabase
-                    .from('perfis').select('*').eq('id', authData.user.id).single();
-
-                if (perfilError || !perfilData) return mostrarErroAuth('Erro ao carregar perfil.');
+                if (authError) {
+                    mostrarErroLogin(traduzErroAuth(authError.message));
+                    return;
+                }
 
                 sessionUser = authData.user;
+
+                const { data: perfilData, error: perfilError } = await supabaseClient
+                    .from('perfis')
+                    .select('*')
+                    .eq('id', sessionUser.id)
+                    .single();
+
+                if (perfilError || !perfilData) {
+                    mostrarErroLogin('Login OK, mas não foi possível carregar o perfil do usuário.');
+                    return;
+                }
+
                 sessionPerfis = perfilData;
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-senha').value = '';
                 aplicarPerfilNaTela(perfilData);
             } catch (err) {
-                mostrarErroAuth('Erro: ' + err.message);
+                mostrarErroLogin('Erro inesperado: ' + err.message);
             } finally {
-                btn.disabled = false;
-                document.getElementById('btn-entrar-texto').innerText = 'Entrar no Painel';
+                setLoadingLogin(false);
             }
-        }
-
-        async function solicitarRedefinicaoSenha() {
-            const emailAtual = document.getElementById('login-email').value.trim();
-            const email = emailAtual || prompt('Informe o e-mail cadastrado para redefinir a senha:');
-            if (!email) return;
-            if (!validarEmail(email)) { mostrarErroAuth('Informe um e-mail válido para redefinir a senha.'); return; }
-
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: window.location.href
-            });
-
-            if (error) { mostrarErroAuth('Não foi possível enviar o link: ' + error.message); return; }
-            mostrarSucessoAuth('Se o e-mail existir em nossa base, um link de redefinição foi enviado.');
-        }
-
-        async function cadastrarEstagiario() {
-            limparMensagensAuth();
-            const nome = document.getElementById('cad-nome').value.trim();
-            const matricula = document.getElementById('cad-matricula').value.trim();
-            const email = document.getElementById('cad-email').value.trim();
-            const senha = document.getElementById('cad-senha').value;
-
-            if (!nome || !matricula || !email || !senha) {
-                return mostrarErroAuth('Todos os campos são obrigatórios.');
-            }
-            if (!validarEmail(email)) {
-                return mostrarErroAuth('Informe um e-mail institucional válido.');
-            }
-            if (senha.length < 6) {
-                return mostrarErroAuth('A senha deve conter pelo menos 6 dígitos.');
-            }
-
-            const btn = document.getElementById('btn-cadastrar');
-            btn.disabled = true;
-            document.getElementById('btn-cadastrar-texto').innerHTML = '<span class="spinner"></span> Registrando...';
-
-            // Correção: usa os dados reais do formulário (o código anterior tinha
-            // e-mail/senha fixos e nomes de variáveis incorretos).
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                email: email,
-                password: senha,
-                options: { data: { nome: nome, matricula: matricula } }
-            });
-
-            if (signUpError) {
-                btn.disabled = false;
-                document.getElementById('btn-cadastrar-texto').innerText = 'Criar Minha Conta';
-                return mostrarErroAuth('Erro no cadastro: ' + signUpError.message);
-            }
-
-            if (!signUpData.user) {
-                btn.disabled = false;
-                document.getElementById('btn-cadastrar-texto').innerText = 'Criar Minha Conta';
-                return mostrarSucessoAuth('Verifique seu e-mail para confirmar a conta antes de entrar.');
-            }
-
-            const novoUserId = signUpData.user.id;
-
-            const { error: perfilError } = await supabase.from('perfis').insert([{
-                id: novoUserId,
-                nome: nome,
-                matricula: matricula,
-                role: 'estagiario',
-                carga_horaria: 4
-            }]);
-
-            btn.disabled = false;
-            document.getElementById('btn-cadastrar-texto').innerText = 'Criar Minha Conta';
-
-            if (perfilError) {
-                return mostrarErroAuth('Conta de login criada, mas erro ao salvar perfil: ' + perfilError.message);
-            }
-
-            mostrarSucessoAuth('Conta criada com sucesso! Alterne para a aba "Entrar" e acesse o painel.');
-            document.getElementById('cad-nome').value = "";
-            document.getElementById('cad-matricula').value = "";
-            document.getElementById('cad-email').value = "";
-            document.getElementById('cad-senha').value = "";
         }
 
         async function deslogar() {
-            if (streamAtivo) streamAtivo.getTracks().forEach(track => track.stop());
-            await supabase.auth.signOut();
-            location.reload();
+            if (streamAtivo) {
+                streamAtivo.getTracks().forEach(track => track.stop());
+                streamAtivo = null;
+            }
+            await supabaseClient.auth.signOut();
+            sessionUser = null;
+            sessionPerfis = null;
+            cameraOk = false;
+            gpsOk = false;
+            gerenciarTelas('login');
         }
 
-        // ---------- Câmera / GPS ----------
-        function haversineMetros(lat1, lon1, lat2, lon2) {
-            const R = 6371000;
-            const toRad = v => v * Math.PI / 180;
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
-            const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        }
-
+        // --------------------------------------------------------------------
+        // CÂMERA E GEOLOCALIZAÇÃO
+        // --------------------------------------------------------------------
         function inicializarCameraEGPS() {
             const video = document.getElementById('webcam');
+
             if (navigator.mediaDevices && !streamAtivo) {
                 navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
                     .then(stream => {
-                        streamAtivo = stream; video.srcObject = stream; cameraOk = true;
-                        document.getElementById('camera-offline').classList.add('hidden');
+                        streamAtivo = stream;
+                        video.srcObject = stream;
+                        cameraOk = true;
                         atualizarDisponibilidadeBotoes();
                     })
                     .catch(() => {
                         cameraOk = false;
-                        document.getElementById('camera-offline').classList.remove('hidden');
-                        toast('Câmera indisponível. Ative-a para poder bater ponto.', 'warn', 5000);
+                        alert("Câmera indisponível. Permita o acesso à câmera para registrar o ponto.");
                     });
             }
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     pos => {
-                        coordsGps.lat = pos.coords.latitude; coordsGps.lng = pos.coords.longitude; gpsOk = true;
-                        const badge = document.getElementById('badge-geo');
-                        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold"; badge.style.background = '#E3F3EC'; badge.style.color = 'var(--ok)'; badge.textContent = "OK";
-                        const dist = Math.round(haversineMetros(coordsGps.lat, coordsGps.lng, LOCAL_REFERENCIA.lat, LOCAL_REFERENCIA.lng));
-                        const dentroDoRaio = dist <= DISTANCIA_MAX_M;
-                        document.getElementById('geo-text').textContent = dentroDoRaio
-                            ? `Coordenadas obtidas • ~${dist}m do local de referência`
-                            : `Coordenadas obtidas • ~${dist}m do local de referência (fora do raio esperado)`;
-                        if (!dentroDoRaio) {
-                            badge.style.background = '#FBF1E0'; badge.style.color = 'var(--warn)'; badge.textContent = "Distante";
-                        }
+                        coordsGps.lat = pos.coords.latitude;
+                        coordsGps.lng = pos.coords.longitude;
+                        gpsOk = true;
+                        document.getElementById('badge-geo').className = "text-xs px-2.5 py-0.5 rounded-full font-bold";
+                        document.getElementById('badge-geo').style.background = '#E3F3EC';
+                        document.getElementById('badge-geo').style.color = 'var(--ok)';
+                        document.getElementById('badge-geo').textContent = "OK";
+                        document.getElementById('geo-text').textContent = "Coordenadas capturadas via GPS";
                         atualizarDisponibilidadeBotoes();
                     },
                     () => {
                         gpsOk = false;
-                        const badge = document.getElementById('badge-geo');
-                        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold"; badge.style.background = '#FBEAE8'; badge.style.color = 'var(--danger)'; badge.textContent = "Falhou";
-                        document.getElementById('geo-text').textContent = "Permita o GPS para bater ponto.";
+                        document.getElementById('badge-geo').className = "text-xs px-2.5 py-0.5 rounded-full font-bold";
+                        document.getElementById('badge-geo').style.background = '#FBEAE8';
+                        document.getElementById('badge-geo').style.color = 'var(--danger)';
+                        document.getElementById('badge-geo').textContent = "Falhou";
+                        document.getElementById('geo-text').textContent = "Permita o acesso à localização para bater o ponto.";
                     }
                 );
+            } else {
+                document.getElementById('geo-text').textContent = "Geolocalização não suportada neste navegador.";
             }
         }
 
+        const BIBLIOTECA_LAT = -15.8003;
+        const BIBLIOTECA_LNG = -47.8790;
+        const RAIO_MAXIMO_METROS = 100;
+
+        function calcularDistancia(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const phi1 = lat1 * Math.PI / 180;
+            const phi2 = lat2 * Math.PI / 180;
+            const dPhi = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dPhi / 2) ** 2 + Math.cos(phi1) * Math.cos(phi2) * Math.sin(dLon / 2) ** 2;
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
+
+        function gerenciarBotoesEstagiario(ativos, desativos) {
+            ativos.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = false;
+            });
+            desativos.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.disabled = true;
+            });
+        }
+
+        // Habilita os botões de ponto somente quando câmera e GPS estiverem prontos
+        // (o status "já registrado hoje" é reaplicado em checarStatusDoDia)
         function atualizarDisponibilidadeBotoes() {
             const ids = ['btn-entrada', 'btn-saida-pausa', 'btn-retorno-pausa', 'btn-saida'];
             if (cameraOk && gpsOk) {
-                ids.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = false; });
-                checarStatusDoDia();
+                gerenciarBotoesEstagiario(ids, []);
+                checarStatusDoDia(); // reaplica bloqueios de batidas já feitas hoje
             }
         }
 
-        // ---------- Estagiário: status do dia / histórico ----------
-        function parseDataLocal(dataString) {
-            if (!dataString) return new Date();
-            return new Date(dataString.replace('Z', '').replace(/-(\d{2}):(\d{2})$/, ''));
-        }
-
+        // --------------------------------------------------------------------
+        // REGISTRO DE PONTO
+        // --------------------------------------------------------------------
         async function checarStatusDoDia() {
             if (!sessionPerfis) return;
-            const dataSelecionada = document.getElementById('hist-data').value || new Date().toISOString().split('T')[0];
-            const { data } = await supabase
+
+            const hoje = new Date().toISOString().split('T')[0];
+            const { data } = await supabaseClient
                 .from('registros_ponto')
                 .select('*')
                 .eq('matricula', sessionPerfis.matricula)
-                .gte('created_at', `${dataSelecionada}T00:00:00.000Z`)
-                .lte('created_at', `${dataSelecionada}T23:59:59.999Z`)
+                .gte('created_at', `${hoje}T00:00:00`)
                 .order('created_at', { ascending: true });
 
-            const mapaTipoParaBotao = { 'Entrada': 'btn-entrada', 'Saída Pausa': 'btn-saida-pausa', 'Retorno Pausa': 'btn-retorno-pausa', 'Saida_Final': 'btn-saida' };
-            ['status-entrada', 'status-saida-pausa', 'status-retorno-pausa', 'status-saida'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = "Não registrado"; });
+            const container = document.getElementById('historico-container');
+            container.innerHTML = "";
+
+            const mapaTipoParaStatus = {
+                'status-entrada': 'Entrada',
+                'status-saida-pausa': 'Saída Pausa',
+                'status-retorno-pausa': 'Retorno Pausa',
+                'status-saida': 'Saída'
+            };
+            const mapaTipoParaBotao = {
+                'Entrada': 'btn-entrada',
+                'Saída Pausa': 'btn-saida-pausa',
+                'Retorno Pausa': 'btn-retorno-pausa',
+                'Saída': 'btn-saida'
+            };
+
+            Object.keys(mapaTipoParaStatus).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = "Não registrado";
+            });
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<div class="text-center py-4 text-xs font-semibold" style="color:var(--ink-muted)">Nenhuma batida hoje.</div>`;
+                atualizarTotalHoras([]);
+                return;
+            }
 
             let horaEntrada = null, horaSaidaPausa = null, horaRetornoPausa = null, horaSaidaFinal = null;
 
-            const hContainer = document.getElementById('historico-container');
-            hContainer.innerHTML = "";
+            data.forEach(reg => {
+                const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-            if (data && data.length > 0) {
-                const batidasUnicas = {};
-                data.forEach(reg => {
-                    if (!batidasUnicas[reg.tipo_batida] || new Date(reg.created_at) > new Date(batidasUnicas[reg.tipo_batida].created_at)) {
-                        batidasUnicas[reg.tipo_batida] = reg;
-                    }
-                });
+                let idStatus = null;
+                if (reg.tipo_batida.includes('Entrada')) { idStatus = 'status-entrada'; horaEntrada = reg.created_at; }
+                else if (reg.tipo_batida.includes('Saída Pausa')) { idStatus = 'status-saida-pausa'; horaSaidaPausa = reg.created_at; }
+                else if (reg.tipo_batida.includes('Retorno Pausa')) { idStatus = 'status-retorno-pausa'; horaRetornoPausa = reg.created_at; }
+                else if (reg.tipo_batida.includes('Saída')) { idStatus = 'status-saida'; horaSaidaFinal = reg.created_at; }
 
-                Object.values(batidasUnicas).forEach(reg => {
-                    const hFormatada = new Date(reg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    const dFormatada = new Date(reg.created_at).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                if (idStatus) {
+                    document.getElementById(idStatus).innerHTML =
+                        `<span class="font-bold text-xs" style="color:var(--ok)"><i class="fa-solid fa-circle-check"></i> ${hFormatada}</span>`;
+                }
 
-                    if (reg.tipo_batida === 'Entrada') { document.getElementById('status-entrada').innerHTML = hFormatada; horaEntrada = reg.created_at; }
-                    else if (reg.tipo_batida === 'Saída Pausa') { document.getElementById('status-saida-pausa').innerHTML = hFormatada; horaSaidaPausa = reg.created_at; }
-                    else if (reg.tipo_batida === 'Retorno Pausa') { document.getElementById('status-retorno-pausa').innerHTML = hFormatada; horaRetornoPausa = reg.created_at; }
-                    else if (reg.tipo_batida === 'Saida_Final') { document.getElementById('status-saida').innerHTML = hFormatada; horaSaidaFinal = reg.created_at; }
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="flex items-center justify-between text-xs px-3 py-2 rounded-lg fade-in" style="background:#F6F5F1">
+                        <span class="font-semibold" style="color:var(--ink)">${reg.tipo_batida}</span>
+                        <span class="font-mono" style="color:var(--ink-muted)">${hFormatada}</span>
+                    </div>
+                `);
+            });
 
-                    const fSrc = reg.foto_url || 'https://via.placeholder.com/150?text=Sem+Foto';
-                    const linkM = reg.latitude ? `<a href="https://google.com/maps?q=${reg.latitude},${reg.longitude}" target="_blank" class="font-bold text-red-700 hover:underline"><i class="fa-solid fa-map-pin"></i> Mapa</a>` : "Sem GPS";
-
-                    hContainer.insertAdjacentHTML('beforeend', `
-                        <tr class="hover:bg-slate-50 border-b py-2 block sm:table-row">
-                            <td class="p-2 font-semibold text-slate-800">${escapeHtml(reg.tipo_batida)}</td>
-                            <td class="p-2 text-gray-500 font-mono text-[11px]">${dFormatada} às ${hFormatada}</td>
-                            <td class="p-2 flex items-center gap-2"><a href="${fSrc}" target="_blank"><img src="${fSrc}" class="w-7 h-7 rounded object-cover border shadow-sm" loading="lazy"></a>${linkM}</td>
-                        </tr>
-                    `);
-                });
-            } else {
-                hContainer.innerHTML = `<tr><td colspan="3" class="p-3 text-center text-gray-400 italic">Nenhum ponto batido nesta data.</td></tr>`;
-            }
-
+            // Bloqueia os tipos já registrados hoje
             Object.entries(mapaTipoParaBotao).forEach(([tipo, btnId]) => {
-                const btn = document.getElementById(btnId); if (!btn) return;
-                const jaRegistrado = data && data.some(r => r.tipo_batida === tipo);
-                btn.disabled = jaRegistrado; btn.style.opacity = jaRegistrado ? "0.5" : "1";
+                const jaRegistrado = data.some(r => r.tipo_batida.includes(tipo));
+                const btn = document.getElementById(btnId);
+                if (btn && jaRegistrado) btn.disabled = true;
             });
 
             atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal });
         }
 
-        function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal }) {
+        function atualizarTotalHoras({ horaEntrada, horaSaidaPausa, horaRetornoPausa, horaSaidaFinal } = {}) {
             const el = document.getElementById('total-horas-dia');
-            if (!el) return;
-            const limHoras = sessionPerfis?.carga_horaria || 4;
+            if (!horaEntrada) { el.textContent = "Total: 0h00m / 6h"; return; }
 
-            if (!horaEntrada) {
-                el.textContent = `Total: 0h00m / ${limHoras}h`;
-                el.style.background = 'var(--navy)';
-                return;
-            }
-
-            const inicio = parseDataLocal(horaEntrada);
-            const fim = horaSaidaFinal ? parseDataLocal(horaSaidaFinal) : new Date();
+            const inicio = new Date(horaEntrada);
+            const fim = horaSaidaFinal ? new Date(horaSaidaFinal) : new Date();
 
             let msTotais = fim - inicio;
 
-            if (horaSaidaPausa && horaRetornoPausa) {
-                const inicioPausa = parseDataLocal(horaSaidaPausa);
-                const fimPausa = parseDataLocal(horaRetornoPausa);
+            if (horaSaidaPausa) {
+                const fimPausa = horaRetornoPausa ? new Date(horaRetornoPausa) : new Date();
+                const inicioPausa = new Date(horaSaidaPausa);
                 msTotais -= Math.max(0, fimPausa - inicioPausa);
             }
 
             msTotais = Math.max(0, msTotais);
             const horas = Math.floor(msTotais / 3600000);
             const minutos = Math.floor((msTotais % 3600000) / 60000);
-
-            el.textContent = `Total: ${horas}h${String(minutos).padStart(2, '0')}m / ${limHoras}h`;
-            el.style.background = (horas + minutos / 60) >= limHoras ? 'var(--ok)' : 'var(--navy)';
+            el.textContent = `Total: ${horas}h${String(minutos).padStart(2, '0')}m / 6h`;
         }
 
-        // ---------- Registro de ponto com prévia de foto ----------
-        function registrarPonto(tipo) {
-            if (!streamAtivo) { toast('Câmera não ativa.', 'err'); return; }
+        async function registrarPonto(tipo) {
+            if (!streamAtivo) return alert("Câmera não está ativa. Aguarde...");
+            if (!coordsGps.lat) return alert("Aguardando GPS...");
+
+            const btnMap = {
+                'Entrada': 'btn-entrada', 'Saída Pausa': 'btn-saida-pausa',
+                'Retorno Pausa': 'btn-retorno-pausa', 'Saída': 'btn-saida'
+            };
+            const btnAtual = document.getElementById(btnMap[tipo]);
+
+            // Prevenção de duplicidade
+            const hoje = new Date().toISOString().split('T')[0];
+            const { data: batidasHoje } = await supabaseClient
+                .from('registros_ponto')
+                .select('tipo_batida')
+                .eq('matricula', sessionPerfis.matricula)
+                .gte('created_at', `${hoje}T00:00:00`);
+
+            const jaRegistrado = batidasHoje?.some(r => r.tipo_batida.includes(tipo));
+            if (jaRegistrado) return alert(`O ponto "${tipo}" já foi registrado hoje.`);
+
+            // Perímetro
+            let tipoFinal = tipo;
+            if (calcularDistancia(coordsGps.lat, coordsGps.lng, BIBLIOTECA_LAT, BIBLIOTECA_LNG) > RAIO_MAXIMO_METROS) {
+                if (!confirm(`Você está fora do perímetro regulamentar da biblioteca. Registrar assim mesmo?`)) return;
+                tipoFinal = `${tipo} (Fora do Perímetro)`;
+            }
+
+            if (btnAtual) btnAtual.disabled = true;
+
+            // Captura da imagem
             const video = document.getElementById('webcam');
             const canvas = document.getElementById('photo-capture');
-            canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            canvas.toBlob((blob) => {
-                pendingPunch = { tipo, blob };
-                video.classList.add('hidden');
-                canvas.classList.remove('hidden');
-                document.getElementById('preview-acoes').classList.remove('hidden');
-                const rotulos = { 'Entrada': 'Entrada', 'Saída Pausa': 'Saída Intervalo', 'Retorno Pausa': 'Retorno Intervalo', 'Saida_Final': 'Saída Final' };
-                document.getElementById('preview-tipo-label').textContent = rotulos[tipo] || tipo;
+            canvas.toBlob(async (blob) => {
+                try {
+                    const nArquivo = `ponto_${sessionPerfis.matricula}_${Date.now()}.png`;
+
+                    const { error: uploadError } = await supabaseClient.storage
+                        .from('fotos_ponto')
+                        .upload(nArquivo, blob, { contentType: 'image/png' });
+
+                    if (uploadError) {
+                        alert("Erro ao enviar foto: " + uploadError.message);
+                        if (btnAtual) btnAtual.disabled = false;
+                        return;
+                    }
+
+                    const { data: pUrl } = supabaseClient.storage.from('fotos_ponto').getPublicUrl(nArquivo);
+
+                    const { error: dbError } = await supabaseClient.from('registros_ponto').insert([{
+                        matricula: sessionPerfis.matricula,
+                        tipo_batida: tipoFinal,
+                        foto_url: pUrl.publicUrl,
+                        latitude: coordsGps.lat,
+                        longitude: coordsGps.lng
+                    }]);
+
+                    if (dbError) {
+                        alert("Erro ao salvar registro: " + dbError.message);
+                        if (btnAtual) btnAtual.disabled = false;
+                        return;
+                    }
+
+                    checarStatusDoDia();
+                } catch (err) {
+                    alert("Erro inesperado ao registrar ponto: " + err.message);
+                    if (btnAtual) btnAtual.disabled = false;
+                }
             }, 'image/png');
         }
 
-        function repetirFoto() {
-            pendingPunch = null;
-            document.getElementById('webcam').classList.remove('hidden');
-            document.getElementById('photo-capture').classList.add('hidden');
-            document.getElementById('preview-acoes').classList.add('hidden');
-        }
-
-        async function confirmarEnvioPonto() {
-            if (!pendingPunch) return;
-            const { tipo, blob } = pendingPunch;
-            const btn = document.getElementById('btn-confirmar-envio');
-            btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Enviando...';
-
-            try {
-                const nArquivo = `ponto_${sessionPerfis.matricula}_${Date.now()}.png`;
-                const { error: uploadError } = await supabase.storage.from('fotos_ponto').upload(nArquivo, blob);
-                if (uploadError) { toast('Erro no upload da foto: ' + uploadError.message, 'err'); return; }
-
-                const { data: pUrl } = supabase.storage.from('fotos_ponto').getPublicUrl(nArquivo);
-                const { error: dbError } = await supabase.from('registros_ponto').insert([{
-                    matricula: sessionPerfis.matricula, tipo_batida: tipo, foto_url: pUrl.publicUrl, latitude: coordsGps.lat, longitude: coordsGps.lng
-                }]);
-
-                if (dbError) { toast('Erro ao salvar: ' + dbError.message, 'err'); return; }
-                toast('Ponto registrado com sucesso!', 'ok');
-                repetirFoto();
-                checarStatusDoDia();
-            } finally {
-                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmar';
-            }
-        }
-
-        // ---------- Solicitação de ajuste (estagiário) ----------
+        // --------------------------------------------------------------------
+        // SOLICITAÇÃO DE AJUSTE
+        // --------------------------------------------------------------------
         async function enviarSolicitacaoAjuste() {
             const data = document.getElementById('adj-data').value;
             const tipo = document.getElementById('adj-tipo').value;
             const hora = document.getElementById('adj-hora').value;
             const motivo = document.getElementById('adj-motivo').value.trim();
 
-            if (!data || !hora || !motivo) { toast('Preencha todos os dados!', 'warn'); return; }
-            const btn = document.getElementById('btn-enviar-ajuste'); btn.disabled = true;
-            document.getElementById('btn-enviar-ajuste-texto').innerHTML = '<span class="spinner"></span> Enviando...';
+            if (!data || !hora || !motivo) return alert("Preencha todos os dados!");
 
-            const { error } = await supabase.from('solicitacoes_ponto').insert([{
-                usuario_id: sessionUser.id, matricula: sessionPerfis.matricula, nome_estagiario: sessionPerfis.nome, data_ponto: data, tipo_batida: tipo, horario_sugerido: hora, motivo: motivo, status: 'pendente'
+            const btn = document.getElementById('btn-enviar-ajuste');
+            btn.disabled = true;
+
+            const { error } = await supabaseClient.from('solicitacoes_ponto').insert([{
+                usuario_id: sessionUser.id,
+                matricula: sessionPerfis.matricula,
+                nome_estagiario: sessionPerfis.nome,
+                data_ponto: data,
+                tipo_batida: tipo,
+                horario_sugerido: hora,
+                motivo: motivo,
+                status: 'pendente'
             }]);
 
             btn.disabled = false;
-            document.getElementById('btn-enviar-ajuste-texto').textContent = 'Enviar Pedido ao Admin';
 
-            if (error) { toast('Erro: ' + error.message, 'err'); return; }
-            toast('Solicitação enviada!', 'ok');
+            if (error) return alert("Erro ao enviar solicitação: " + error.message);
+
+            alert("Solicitação enviada!");
             document.getElementById('adj-motivo').value = "";
-            carregarMinhasSolicitacoes();
         }
 
-        async function carregarMinhasSolicitacoes() {
-            if (!sessionUser) return;
-            const container = document.getElementById('minhas-solicitacoes-container');
-            container.innerHTML = `<p class="text-center py-3 text-xs text-gray-400"><span class="spinner-dark"></span></p>`;
-
-            const { data, error } = await supabase
-                .from('solicitacoes_ponto').select('*').eq('usuario_id', sessionUser.id)
-                .order('id', { ascending: false }).limit(10);
-
-            if (error) { container.innerHTML = `<p class="text-center py-3 text-xs text-red-500">Erro ao carregar.</p>`; return; }
-            if (!data || data.length === 0) { container.innerHTML = `<p class="text-center py-3 text-xs text-gray-400">Nenhuma solicitação enviada.</p>`; return; }
-
-            const badges = {
-                pendente: '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:var(--warn-soft); color:var(--warn)">Pendente</span>',
-                aprovado: '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:var(--ok-soft); color:var(--ok)">Aprovado</span>',
-                rejeitado: '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:var(--danger-soft); color:var(--danger)">Rejeitado</span>'
-            };
-
-            container.innerHTML = data.map(s => `
-                <div class="border rounded-xl p-2.5 text-[11px] flex items-center justify-between gap-2" style="border-color:#E7E4DA">
-                    <div>
-                        <div class="font-bold text-slate-700">${escapeHtml(s.tipo_batida)} — ${escapeHtml(s.data_ponto)} às ${escapeHtml(s.horario_sugerido)}</div>
-                        <div class="text-gray-400 italic">"${escapeHtml(s.motivo)}"</div>
-                    </div>
-                    ${badges[s.status] || badges.pendente}
-                </div>
-            `).join('');
-        }
-
-        // ---------- Admin: tabela e paginação ----------
-        function linhasSkeleton(n = 5) {
-            return Array.from({ length: n }).map(() => `
-                <tr class="skeleton-row"><td colspan="4"><div class="skeleton-bar" style="width:100%"></div></td></tr>
-            `).join('');
-        }
-
-        async function carregarPerfisMap() {
-            const { data } = await supabase.from('perfis').select('matricula, nome');
-            perfisMap = {};
-            (data || []).forEach(p => { perfisMap[p.matricula] = p.nome; });
+        // --------------------------------------------------------------------
+        // PAINEL DO ADMINISTRADOR
+        // --------------------------------------------------------------------
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
         }
 
         async function carregarDadosPainelAdmin() {
-            adminOffset = 0;
-            document.getElementById('admin-tabela-ponto').innerHTML = linhasSkeleton();
-            await carregarPerfisMap();
-            await buscarRegistrosAdmin(true);
-            await buscarSolicitacoesAdmin();
-        }
-
-        async function carregarMaisRegistros() {
-            await buscarRegistrosAdmin(false);
-        }
-
-        async function buscarRegistrosAdmin(substituir) {
-            const termoBusca = document.getElementById('filtro-matricula').value.trim();
+            const fMatricula = document.getElementById('filtro-matricula').value.trim();
             const fData = document.getElementById('filtro-data').value;
-            const ordemAsc = document.getElementById('filtro-ordem').value === 'asc';
 
-            let matriculasFiltro = null;
-            if (termoBusca) {
-                const termoLower = termoBusca.toLowerCase();
-                matriculasFiltro = Object.entries(perfisMap)
-                    .filter(([mat, nome]) => mat.includes(termoBusca) || (nome || '').toLowerCase().includes(termoLower))
-                    .map(([mat]) => mat);
-                if (matriculasFiltro.length === 0 && !Object.prototype.hasOwnProperty.call(perfisMap, termoBusca)) {
-                    matriculasFiltro.push(termoBusca); // permite buscar matrícula que não tenha perfil (dado legado)
-                }
-            }
-
-            let query = supabase.from('registros_ponto').select('*').order('created_at', { ascending: ordemAsc });
-
-            if (matriculasFiltro) query = query.in('matricula', matriculasFiltro);
-
-            if (fData) {
-                const inicioDoDia = `${fData}T00:00:00.000Z`;
-                const fimDoDia = `${fData}T23:59:59.999Z`;
-                query = query.gte('created_at', inicioDoDia).lte('created_at', fimDoDia);
-            }
-
-            query = query.range(adminOffset, adminOffset + ADMIN_PAGE_SIZE - 1);
+            let query = supabaseClient.from('registros_ponto').select('*').order('created_at', { ascending: false });
+            if (fMatricula) query = query.eq('matricula', fMatricula);
+            if (fData) query = query.gte('created_at', `${fData}T00:00:00`).lte('created_at', `${fData}T23:59:59`);
 
             const { data: batidas, error } = await query;
             const tabela = document.getElementById('admin-tabela-ponto');
-            if (substituir) tabela.innerHTML = "";
+            tabela.innerHTML = "";
 
             if (error) {
-                tabela.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs text-red-500 font-semibold">Erro ao carregar dados: ${escapeHtml(error.message)}</td></tr>`;
-                document.getElementById('btn-carregar-mais').classList.add('hidden');
-                return;
-            }
-
-            if ((!batidas || batidas.length === 0) && substituir) {
-                tabela.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-xs text-gray-400">Nenhum registro encontrado para este filtro. Ajuste a busca ou a data.</td></tr>`;
-                document.getElementById('admin-contagem').textContent = '';
-                document.getElementById('btn-carregar-mais').classList.add('hidden');
-                return;
-            }
-
-            batidas.forEach(b => {
-                registrosCache[b.id] = b;
-                const dataB = new Date(b.created_at).toLocaleDateString('pt-BR');
-                const horaB = new Date(b.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                const mapLink = b.latitude ? `<a href="https://google.com/maps?q=${b.latitude},${b.longitude}" target="_blank" class="font-bold text-red-700 hover:underline"><i class="fa-solid fa-map-pin"></i> Mapa</a>` : "Sem GPS";
-                const fotoSrc = b.foto_url || 'https://via.placeholder.com/150?text=Sem+Foto';
-                const nomeColaborador = perfisMap[b.matricula] || null;
-
-                tabela.insertAdjacentHTML('beforeend', `
-                    <tr class="hover:bg-slate-50 border-b" style="border-color:#F0EEE6">
-                        <td class="p-3">
-                            <div class="font-bold text-slate-800">${nomeColaborador ? escapeHtml(nomeColaborador) : '<span class="italic text-gray-400">Sem perfil</span>'}</div>
-                            <div class="text-[10px] font-mono text-gray-400">${escapeHtml(b.matricula)}</div>
-                        </td>
-                        <td class="p-3">
-                            <span class="font-semibold">${escapeHtml(b.tipo_batida)}</span> <br>
-                            <span class="text-[10px] font-mono text-gray-500">${dataB} às ${horaB}</span>
-                            ${b.abonado ? `<br><span class="text-[10px] font-bold" style="color:var(--warn)"><i class="fa-solid fa-stamp"></i> Abonado</span>` : ''}
-                        </td>
-                        <td class="p-3"><div class="flex items-center gap-2"><a href="${fotoSrc}" target="_blank"><img src="${fotoSrc}" class="w-8 h-8 rounded object-cover border shadow-sm" loading="lazy"></a>${mapLink}</div></td>
-                        <td class="p-3 text-center whitespace-nowrap no-print">
-                            <button data-action="abonar" data-id="${b.id}" data-abonado="${!!b.abonado}" class="px-2 py-1 text-white rounded font-bold text-[10px] transition active:scale-95" style="background:${b.abonado ? 'var(--warn)' : 'var(--navy)'}">${b.abonado ? 'Abonado' : 'Abonar'}</button>
-                            <button data-action="editar" data-id="${b.id}" class="px-2 py-1 text-white rounded font-bold text-[10px] transition active:scale-95" style="background:var(--brass)">Editar</button>
-                            <button data-action="excluir" data-id="${b.id}" class="px-2 py-1 bg-red-600 text-white rounded font-bold text-[10px] transition active:scale-95 hover:bg-red-700">Excluir</button>
-                        </td>
-                    </tr>
-                `);
-            });
-
-            adminOffset += batidas.length;
-            document.getElementById('admin-contagem').textContent = `${adminOffset} registro(s) carregado(s)`;
-            document.getElementById('btn-carregar-mais').classList.toggle('hidden', batidas.length < ADMIN_PAGE_SIZE);
-        }
-
-        function onAdminTabelaClick(e) {
-            const btn = e.target.closest('button[data-action]');
-            if (!btn) return;
-            const id = parseInt(btn.dataset.id, 10);
-            if (btn.dataset.action === 'abonar') abonarRegistro(id, btn.dataset.abonado === 'true');
-            else if (btn.dataset.action === 'editar') alterarHorarioPonto(id);
-            else if (btn.dataset.action === 'excluir') excluirPonto(id);
-        }
-
-        async function abonarRegistro(id, estadoAtual) {
-            if (estadoAtual) {
-                confirmarAcao('Remover o abono deste registro?', async () => {
-                    const { error } = await supabase.from('registros_ponto').update({ abonado: false, justificativa_abono: null }).eq('id', id);
-                    if (error) { toast('Erro: ' + error.message, 'err'); return; }
-                    toast('Abono removido.', 'ok');
-                    carregarDadosPainelAdmin();
-                }, 'Remover abono');
-                return;
-            }
-            const justificativa = prompt("Insira a justificativa legal do abono:");
-            if (!justificativa) return;
-            const { error } = await supabase.from('registros_ponto').update({ abonado: true, justificativa_abono: justificativa }).eq('id', id);
-            if (error) { toast('Erro: ' + error.message, 'err'); return; }
-            toast('Registro abonado.', 'ok');
-            carregarDadosPainelAdmin();
-        }
-
-        function alterarHorarioPonto(id) {
-            const reg = registrosCache[id];
-            document.getElementById('edit-ponto-id').value = id;
-            if (reg) {
-                const dt = new Date(reg.created_at);
-                document.getElementById('edit-data-input').value = dt.toISOString().split('T')[0];
-                document.getElementById('edit-hora-input').value = dt.toISOString().split('T')[1].slice(0, 5);
-            }
-            document.getElementById('modal-edicao-horario').classList.remove('hidden');
-        }
-
-        async function confirmarEdicaoPonto() {
-            const id = document.getElementById('edit-ponto-id').value;
-            const data = document.getElementById('edit-data-input').value;
-            const hora = document.getElementById('edit-hora-input').value;
-            if (!data || !hora) { toast('Preencha data e horário.', 'warn'); return; }
-
-            const dataCompleta = `${data}T${hora}:00`;
-            const btn = document.getElementById('btn-salvar-edicao-horario');
-            btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
-
-            const { error } = await supabase
-                .from('registros_ponto')
-                .update({ created_at: dataCompleta })
-                .eq('id', id);
-
-            btn.disabled = false; btn.textContent = 'Salvar';
-
-            if (error) {
-                toast('Erro no servidor: ' + error.message, 'err');
+                tabela.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs" style="color:var(--danger)">Erro ao carregar registros: ${escapeHtml(error.message)}</td></tr>`;
+            } else if (!batidas || batidas.length === 0) {
+                tabela.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-xs" style="color:var(--ink-muted)">Nenhum registro encontrado.</td></tr>`;
             } else {
-                toast('Horário atualizado com sucesso!', 'ok');
-                document.getElementById('modal-edicao-horario').classList.add('hidden');
-                carregarDadosPainelAdmin();
+                batidas.forEach(b => {
+                    const dataB = new Date(b.created_at).toLocaleDateString('pt-BR');
+                    const horaB = new Date(b.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const mapLink = b.latitude
+                        ? `<a href="https://google.com/maps?q=${b.latitude},${b.longitude}" target="_blank" rel="noopener" class="font-bold" style="color:var(--danger)"><i class="fa-solid fa-map-pin"></i> Mapa</a>`
+                        : "Sem GPS";
+                    const fotoSrc = b.foto_url || 'https://via.placeholder.com/150?text=Sem+Foto';
+
+                    tabela.insertAdjacentHTML('beforeend', `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 font-bold" style="color:var(--ink)">${escapeHtml(b.matricula)}</td>
+                            <td class="p-3">${escapeHtml(b.tipo_batida)} <br> <span class="text-[10px] font-mono" style="color:var(--ink-muted)">${dataB} às ${horaB}</span></td>
+                            <td class="p-3">
+                                <div class="flex items-center gap-2">
+                                    <a href="${fotoSrc}" target="_blank" rel="noopener">
+                                        <img src="${fotoSrc}" onerror="this.onerror=null;this.src='https://via.placeholder.com/150?text=Erro'" class="w-8 h-8 rounded object-cover border shadow-sm">
+                                    </a>
+                                    ${mapLink}
+                                </div>
+                            </td>
+                            <td class="p-3 text-center space-x-1 whitespace-nowrap">
+                                <button onclick="abonarRegistro(${b.id}, ${!!b.abonado})" class="px-2 py-1 text-white rounded font-bold text-[10px]" style="background:${b.abonado ? 'var(--warn)' : 'var(--navy)'}">${b.abonado ? 'Abonado' : 'Abonar'}</button>
+                                <button onclick="alterarHorarioPonto(${b.id})" class="px-2 py-1 text-white rounded font-bold text-[10px]" style="background:var(--brass)">Editar</button>
+                            </td>
+                        </tr>
+                    `);
+                });
             }
-        }
 
-        function excluirPonto(id) {
-            confirmarAcao('Tem certeza que deseja excluir este registro de ponto? Esta ação não pode ser desfeita.', async () => {
-                const { error } = await supabase.from('registros_ponto').delete().eq('id', id);
-                if (error) { toast('Erro: ' + error.message, 'err'); return; }
-                toast('Registro excluído!', 'ok');
-                carregarDadosPainelAdmin();
-            }, 'Excluir registro');
-        }
-
-        // ---------- Admin: solicitações pendentes ----------
-        let solicitacoesCache = {};
-
-        async function buscarSolicitacoesAdmin() {
-            const container = document.getElementById('admin-solicitacoes-container');
-            container.innerHTML = `<p class="text-center py-4 text-xs text-gray-400"><span class="spinner-dark"></span></p>`;
-
-            const { data: solicitacoes, error: solErr } = await supabase.from('solicitacoes_ponto').select('*').eq('status', 'pendente').order('id', { ascending: false });
-
-            if (solErr) {
-                container.innerHTML = `<p class="text-center py-4 text-xs text-red-500">Erro ao buscar pendências.</p>`;
-                return;
-            }
+            const { data: solicitacoes } = await supabaseClient.from('solicitacoes_ponto').select('*').eq('status', 'pendente');
+            const sContainer = document.getElementById('admin-solicitacoes-container');
+            sContainer.innerHTML = "";
 
             if (!solicitacoes || solicitacoes.length === 0) {
-                container.innerHTML = `<p class="text-center py-4 text-xs text-gray-400">Nenhuma pendência encontrada.</p>`;
+                sContainer.innerHTML = `<p class="text-center py-4 text-xs font-medium" style="color:var(--ink-muted)">Nenhuma pendência.</p>`;
                 return;
             }
 
-            solicitacoesCache = {};
-            container.innerHTML = "";
             solicitacoes.forEach(s => {
-                solicitacoesCache[s.id] = s;
-                container.insertAdjacentHTML('beforeend', `
-                    <div class="border p-3 rounded-xl space-y-2 fade-in" style="background:#F6F5F1; border-color:#E7E4DA">
+                sContainer.insertAdjacentHTML('beforeend', `
+                    <div class="border p-3 rounded-xl space-y-2" style="background:#F6F5F1; border-color:#E7E4DA">
                         <div class="flex justify-between items-start">
                             <div>
-                                <h4 class="font-bold text-xs" style="color:var(--navy)">${escapeHtml(s.nome_estagiario)}</h4>
-                                <p class="text-[10px] font-mono text-gray-400">Matrícula: ${escapeHtml(s.matricula)}</p>
+                                <h4 class="font-bold text-xs" style="color:var(--ink)">${escapeHtml(s.nome_estagiario)}</h4>
+                                <p class="text-[10px] font-mono" style="color:var(--ink-muted)">${escapeHtml(s.matricula)}</p>
                             </div>
-                            <span class="text-[10px] font-black px-1.5 py-0.5 rounded bg-gray-200 text-slate-800">${escapeHtml(s.tipo_batida)}</span>
+                            <span class="text-[10px] font-black px-1.5 py-0.5 rounded" style="background:#E9E4D6; color:var(--navy)">${escapeHtml(s.tipo_batida)}</span>
                         </div>
-                        <p class="text-[11px] bg-white p-1.5 border rounded" style="border-color:#E7E4DA">
-                            <strong>Ajuste:</strong> ${escapeHtml(s.data_ponto)} às ${escapeHtml(s.horario_sugerido)}<br>
-                            <strong>Motivo:</strong> <span class="italic text-gray-600">"${escapeHtml(s.motivo)}"</span>
-                        </p>
+                        <p class="text-[11px] bg-white p-1.5 border rounded" style="color:var(--ink); border-color:#E7E4DA"><strong>Ajuste:</strong> ${escapeHtml(s.data_ponto)} às ${escapeHtml(s.horario_sugerido)}<br><strong>Motivo:</strong> ${escapeHtml(s.motivo)}</p>
                         <div class="flex gap-2">
-                            <button data-action="aprovar" data-id="${s.id}" class="flex-1 py-1 text-white text-[10px] font-bold rounded bg-emerald-600 hover:bg-emerald-700 transition active:scale-95">Aprovar</button>
-                            <button data-action="rejeitar" data-id="${s.id}" class="flex-1 py-1 text-white text-[10px] font-bold rounded bg-rose-600 hover:bg-rose-700 transition active:scale-95">Rejeitar</button>
+                            <button onclick="responderSolicitacao(${s.id}, 'aprovado', '${escapeHtml(s.matricula)}', '${escapeHtml(s.data_ponto)}', '${escapeHtml(s.horario_sugerido)}', '${escapeHtml(s.tipo_batida)}')" class="flex-1 py-1 text-white text-[10px] font-bold rounded" style="background:var(--ok)">Aprovar</button>
+                            <button onclick="responderSolicitacao(${s.id}, 'rejeitado')" class="flex-1 py-1 text-white text-[10px] font-bold rounded" style="background:var(--danger)">Rejeitar</button>
                         </div>
                     </div>
                 `);
             });
         }
 
-        function onSolicitacoesClick(e) {
-            const btn = e.target.closest('button[data-action]');
-            if (!btn) return;
-            const id = parseInt(btn.dataset.id, 10);
-            const status = btn.dataset.action === 'aprovar' ? 'aprovado' : 'rejeitado';
-            responderSolicitacao(id, status);
-        }
+        async function abonarRegistro(id, estadoAtual) {
+            const justificativa = estadoAtual ? null : prompt("Insira a justificativa legal do abono:");
+            if (!estadoAtual && !justificativa) return;
 
-        async function responderSolicitacao(id, status) {
-            const s = solicitacoesCache[id];
-            if (!s) { toast('Solicitação não encontrada. Atualize a lista.', 'err'); return; }
+            const { error } = await supabaseClient.from('registros_ponto')
+                .update({ abonado: !estadoAtual, justificativa_abono: justificativa })
+                .eq('id', id);
 
-            if (status === 'aprovado') {
-                const [ano, mes, dia] = s.data_ponto.split('-');
-                const [h, m] = s.horario_sugerido.split(':');
-                const dataMontada = new Date(ano, mes - 1, dia, h, m, 0);
-                const { error: insErr } = await supabase.from('registros_ponto').insert([{
-                    matricula: s.matricula, tipo_batida: `${s.tipo_batida} (Ajuste)`, created_at: dataMontada.toISOString(), foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
-                }]);
-                if (insErr) { toast('Erro ao salvar: ' + insErr.message, 'err'); return; }
-            }
-            const { error: updErr } = await supabase.from('solicitacoes_ponto').update({ status }).eq('id', id);
-            if (updErr) { toast('Erro: ' + updErr.message, 'err'); return; }
-            toast(status === 'aprovado' ? 'Solicitação aprovada!' : 'Solicitação rejeitada.', 'ok');
+            if (error) return alert("Erro ao atualizar abono: " + error.message);
             carregarDadosPainelAdmin();
         }
 
-        // ---------- Exportação ----------
-        async function baixarFolhaPonto() {
-            const termoBusca = document.getElementById('filtro-matricula').value.trim();
-            let matriculasFiltro = null;
-            if (termoBusca) {
-                const termoLower = termoBusca.toLowerCase();
-                matriculasFiltro = Object.entries(perfisMap)
-                    .filter(([mat, nome]) => mat.includes(termoBusca) || (nome || '').toLowerCase().includes(termoLower))
-                    .map(([mat]) => mat);
-                if (matriculasFiltro.length === 0) matriculasFiltro.push(termoBusca);
-            }
+        async function alterarHorarioPonto(id) {
+            const nH = prompt("Novo horário no padrão ISO (Exemplo: 2026-07-12T14:30:00):");
+            if (!nH) return;
 
-            let query = supabase.from('registros_ponto').select('matricula, tipo_batida, created_at, abonado, justificativa_abono').order('created_at', { ascending: false });
-            if (matriculasFiltro) query = query.in('matricula', matriculasFiltro);
+            const novaData = new Date(nH);
+            if (isNaN(novaData.getTime())) return alert("Data/hora inválida. Use o formato AAAA-MM-DDTHH:MM:SS.");
 
-            const { data, error } = await query;
-            if (error || !data || data.length === 0) { toast('Sem dados disponíveis para exportar.', 'warn'); return; }
+            const { error } = await supabaseClient.from('registros_ponto')
+                .update({ created_at: novaData.toISOString(), editado_por_admin_id: sessionUser.id })
+                .eq('id', id);
 
-            const linhas = data.map(r => {
-                const nome = perfisMap[r.matricula] || '';
-                return `${r.matricula},"${nome.replace(/"/g, '""')}","${r.tipo_batida}","${r.created_at}",${r.abonado ? 'Sim' : 'Não'},"${(r.justificativa_abono || '').replace(/"/g, '""')}"`;
-            });
-            const cabecalho = "Matricula,Nome,Tipo Batida,Data/Hora Original,Abonado,Justificativa\n";
-            const csv = "\uFEFF" + cabecalho + linhas.join("\n"); // BOM para acentuação correta no Excel
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url; link.download = `Folha_Ponto_${termoBusca || 'Geral'}.csv`;
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            toast('Exportação gerada com sucesso.', 'ok');
+            if (error) return alert("Erro ao alterar horário: " + error.message);
+            alert("Horário alterado.");
+            carregarDadosPainelAdmin();
         }
 
-        function imprimirFolha() { window.print(); }
+        async function responderSolicitacao(id, status, matricula, data, hora, tipo) {
+            if (status === 'aprovado') {
+                const [ano, mes, dia] = data.split('-');
+                const [h, m] = hora.split(':');
+                const dataMontada = new Date(ano, mes - 1, dia, h, m, 0);
 
-        // ---------- Utilitários ----------
-        function escapeHtml(str) { return String(str ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+                const { error: insertError } = await supabaseClient.from('registros_ponto').insert([{
+                    matricula: matricula,
+                    tipo_batida: `${tipo} (Ajuste Manual)`,
+                    created_at: dataMontada.toISOString(),
+                    foto_url: 'https://via.placeholder.com/150?text=Ajuste+Manual'
+                }]);
+
+                if (insertError) return alert("Erro ao salvar ajuste no banco: " + insertError.message);
+            }
+
+            const { error: updateError } = await supabaseClient
+                .from('solicitacoes_ponto')
+                .update({ status: status })
+                .eq('id', id);
+
+            if (updateError) return alert("Erro ao atualizar status: " + updateError.message);
+
+            alert(`Solicitação processada com sucesso!`);
+            carregarDadosPainelAdmin();
+        }
+
+        async function baixarFolhaPonto() {
+            const fMatricula = document.getElementById('filtro-matricula').value.trim();
+            let query = supabaseClient.from('registros_ponto').select('matricula, tipo_batida, created_at, abonado, justificativa_abono');
+            if (fMatricula) query = query.eq('matricula', fMatricula);
+
+            const { data, error } = await query;
+            if (error) return alert("Erro ao gerar folha: " + error.message);
+            if (!data || data.length === 0) return alert("Nenhum dado localizado.");
+
+            const linhas = data.map(r =>
+                `${r.matricula},"${r.tipo_batida}","${r.created_at}",${r.abonado},"${(r.justificativa_abono || '').replace(/"/g, '""')}"`
+            );
+            const csv = "data:text/csv;charset=utf-8,Matricula,Tipo Batida,Data/Hora Original,Abonado,Justificativa\n" + linhas.join("\n");
+
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csv));
+            link.setAttribute("download", `Folha_Ponto_${fMatricula || 'Geral'}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
 </body>
 </html>
